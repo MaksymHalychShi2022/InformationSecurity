@@ -6,12 +6,19 @@ import androidx.lifecycle.ViewModel
 
 class Lab1ViewModel : ViewModel() {
 
-    private val _output = MutableLiveData<String>().apply {
+    private val _generatedNumbers = MutableLiveData<String>().apply {
         value = "Here will be generated numbers!"
     }
-    val output: LiveData<String> = _output
+    val generatedNumbers: LiveData<String> = _generatedNumbers
 
-    fun updateOutput(output: String) {
-        _output.value = output
+    private val _estimatedPi = MutableLiveData<Double>()
+    val estimatedPi: LiveData<Double> = _estimatedPi
+
+    fun updateGeneratedNumbers(newValue: String) {
+        _generatedNumbers.value = newValue
+    }
+
+    fun updateEstimatedPi(newValue: Double) {
+        _estimatedPi.value = newValue
     }
 }

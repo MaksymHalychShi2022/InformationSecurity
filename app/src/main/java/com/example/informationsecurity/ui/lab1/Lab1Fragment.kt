@@ -12,6 +12,8 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab1Binding
 import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
 
@@ -29,7 +31,7 @@ class Lab1Fragment : Fragment() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 result.data?.data?.also { uri ->
-                    saveFile(uri, viewModel.output.value ?: "")
+                    saveFile(uri, viewModel.generatedNumbers.value ?: "")
                 }
             }
         }
@@ -46,7 +48,7 @@ class Lab1Fragment : Fragment() {
             val n: Long = binding.etHowManyNumbersToGenerate.text.toString().toLong()
             val generator = LehmerRandomNumberGenerator()
             val generatedNumbers = generator.generateSequence(n)
-            viewModel.updateOutput(generatedNumbers.joinToString("\n"))
+            viewModel.updateGeneratedNumbers(generatedNumbers.joinToString("\n"))
 
             Toast.makeText(
                 context,
@@ -62,10 +64,10 @@ class Lab1Fragment : Fragment() {
         }
 
         binding.btnEstimatePi.setOnClickListener {
-            Toast.makeText(context, "Hello there!", Toast.LENGTH_SHORT).show()
+            findNavController().navigate(R.id.action_nav_lab1_to_estimatePiFragment)
         }
 
-        viewModel.output.observe(viewLifecycleOwner) {
+        viewModel.generatedNumbers.observe(viewLifecycleOwner) {
             binding.tvOutput.text = it
         }
         return root

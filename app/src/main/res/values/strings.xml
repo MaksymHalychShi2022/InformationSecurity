@@ -11,6 +11,7 @@
     <string name="menu_lab2">Lab 2</string>
     <string name="menu_lab3">Lab 3</string>
     <string name="how_many_numbers_to_generate">How many numbers to generate?</string>
+    <string name="how_many_pairs_to_generate">How many pairs to generate?</string>
     <string name="generate">Generate</string>
     <string name="estimate_pi">Estimate Pi</string>
     <string name="save_to_file">Save to file</string>
