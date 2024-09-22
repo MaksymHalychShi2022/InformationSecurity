@@ -10,4 +10,7 @@
     <string name="menu_lab1">Lab 1</string>
     <string name="menu_lab2">Lab 2</string>
     <string name="menu_lab3">Lab 3</string>
+    <string name="how_many_numbers_to_generate">How many numbers to generate?</string>
+    <string name="generate">Generate</string>
+    <string name="estimate_pi">Estimate Pi</string>
 </resources>

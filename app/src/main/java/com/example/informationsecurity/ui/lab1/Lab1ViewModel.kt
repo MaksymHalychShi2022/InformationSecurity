@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModel
 
 class Lab1ViewModel : ViewModel() {
 
-    private val _text = MutableLiveData<String>().apply {
+    private val _output = MutableLiveData<String>().apply {
         value = "This is Lab 1 Fragment"
     }
-    val text: LiveData<String> = _text
+    val output: LiveData<String> = _output
 }
