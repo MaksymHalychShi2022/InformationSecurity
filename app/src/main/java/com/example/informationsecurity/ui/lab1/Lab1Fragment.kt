@@ -1,10 +1,14 @@
 package com.example.informationsecurity.ui.lab1
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.informationsecurity.databinding.FragmentLab1Binding
@@ -19,10 +23,18 @@ class Lab1Fragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
+    // Register the file picker
+    private val createFileLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.also { uri ->
+                    saveFile(uri, viewModel.output.value ?: "")
+                }
+            }
+        }
+
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         viewModel = ViewModelProvider(this).get(Lab1ViewModel::class.java)
 
@@ -36,6 +48,10 @@ class Lab1Fragment : Fragment() {
             viewModel.updateOutput(generatedNumbers.joinToString("\n"))
         }
 
+        binding.btnSaveToFile.setOnClickListener {
+            openSaveFileDialog()
+        }
+
         binding.btnEstimatePi.setOnClickListener {
             Toast.makeText(context, "Hello there!", Toast.LENGTH_SHORT).show()
         }
@@ -46,6 +62,30 @@ class Lab1Fragment : Fragment() {
         return root
     }
 
+    // Open the file picker dialog to save the file
+    private fun openSaveFileDialog() {
+
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/plain" // You can specify other types like "application/json" for JSON
+            putExtra(Intent.EXTRA_TITLE, "random_numbers.txt") // Default filename
+        }
+        createFileLauncher.launch(intent)
+    }
+
+    // Save the file to the chosen location
+    private fun saveFile(uri: Uri, content: String) {
+        try {
+            // Use requireContext() to get the context from the Fragment
+            requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(content.toByteArray())
+            }
+            Toast.makeText(requireContext(), "File saved successfully!", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Failed to save file!", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

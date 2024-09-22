@@ -9,15 +9,15 @@
 
 
     <EditText
-        android:inputType="numberDecimal"
         android:id="@+id/etHowManyNumbersToGenerate"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:autofillHints="1234"
         android:hint="@string/how_many_numbers_to_generate"
+        android:inputType="numberDecimal"
         app:layout_constraintEnd_toStartOf="@+id/btnGenerate"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/btnGenerate"
-        android:autofillHints="1234" />
+        app:layout_constraintTop_toTopOf="@+id/btnGenerate" />
 
     <Button
         android:id="@+id/btnGenerate"
@@ -43,6 +43,17 @@
 
     </ScrollView>
 
+
+    <Button
+        android:id="@+id/btnSaveToFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="@string/save_to_file"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/scrollOutput" />
+
     <Button
         android:id="@+id/btnEstimatePi"
         android:layout_width="wrap_content"
@@ -51,7 +62,6 @@
         android:text="@string/estimate_pi"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scrollOutput" />
-
+        app:layout_constraintTop_toBottomOf="@+id/btnSaveToFile" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
