@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.informationsecurity.R
@@ -29,20 +30,21 @@ class EstimatePiFragment : Fragment() {
         val root: View = binding.root
 
         binding.btnGenerate.setOnClickListener {
-            val n: Long = binding.etHowManyPairsToGenerate.text.toString().toLong()
             val useStandardLib: Boolean = binding.cbUseStandardLib.isChecked
-            val estimatedPi = if (useStandardLib) {
-                RandomNumbersUtils.estimatePi(
+            val numberOfPairs: Long? =
+                binding.etHowManyPairsToGenerate.text.toString().toLongOrNull()
+            if (numberOfPairs != null && numberOfPairs > 0) {
+                val estimatedPi = if (useStandardLib) RandomNumbersUtils.estimatePi(
                     { (1L..32767L).random() }, // Lambda for standard random number generation
-                    totalPairs = n
-                )
-            } else {
-                RandomNumbersUtils.estimatePi(
+                    totalPairs = numberOfPairs
+                ) else RandomNumbersUtils.estimatePi(
                     LehmerRandomNumberGenerator()::next, // Function reference to the Lehmer RNG's next() method
-                    totalPairs = n
+                    totalPairs = numberOfPairs
                 )
+                viewModel.updateEstimatedPi(estimatedPi)
+            } else {
+                Toast.makeText(context, "Invalid input!", Toast.LENGTH_LONG).show()
             }
-            viewModel.updateEstimatedPi(estimatedPi)
         }
 
         viewModel.estimatedPi.observe(viewLifecycleOwner) {

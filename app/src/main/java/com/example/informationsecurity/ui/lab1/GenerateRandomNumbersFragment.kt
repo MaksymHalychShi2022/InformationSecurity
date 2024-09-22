@@ -14,12 +14,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.informationsecurity.R
-import com.example.informationsecurity.databinding.FragmentLab1Binding
+import com.example.informationsecurity.databinding.FragmentGenerateRandomNumbersBinding
 import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
 
-class Lab1Fragment : Fragment() {
+class GenerateRandomNumbersFragment : Fragment() {
 
-    private var _binding: FragmentLab1Binding? = null
+    private var _binding: FragmentGenerateRandomNumbersBinding? = null
     private lateinit var viewModel: Lab1ViewModel
 
     // This property is only valid between onCreateView and
@@ -41,22 +41,22 @@ class Lab1Fragment : Fragment() {
     ): View {
         viewModel = ViewModelProvider(this).get(Lab1ViewModel::class.java)
 
-        _binding = FragmentLab1Binding.inflate(inflater, container, false)
+        _binding = FragmentGenerateRandomNumbersBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         binding.btnGenerate.setOnClickListener {
-            val n: Long = binding.etHowManyNumbersToGenerate.text.toString().toLong()
-            val generator = LehmerRandomNumberGenerator()
-            val generatedNumbers = generator.generateSequence(n)
-            viewModel.updateGeneratedNumbers(generatedNumbers.joinToString("\n"))
+            val lengthOfSequence: Long? =
+                binding.etHowManyNumbersToGenerate.text.toString().toLongOrNull()
+            if (lengthOfSequence != null && lengthOfSequence > 0) {
+                val generator = LehmerRandomNumberGenerator()
+                val generatedNumbers = generator.generateSequence(lengthOfSequence)
+                viewModel.updateGeneratedNumbers(generatedNumbers.joinToString("\n"))
 
-            Toast.makeText(
-                context,
-                "Generated!",
-                Toast.LENGTH_LONG
-            ).show()
-
-            Log.d("Period", "Period of generated sequence: ${generator.getPeriod()}")
+                Toast.makeText(context, "Generated!", Toast.LENGTH_LONG).show()
+                Log.d("Period", "Period of generated sequence: ${generator.getPeriod()}")
+            } else {
+                Toast.makeText(context, "Invalid input!", Toast.LENGTH_LONG).show()
+            }
         }
 
         binding.btnSaveToFile.setOnClickListener {
