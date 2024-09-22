@@ -7,7 +7,11 @@ import androidx.lifecycle.ViewModel
 class Lab1ViewModel : ViewModel() {
 
     private val _output = MutableLiveData<String>().apply {
-        value = "This is Lab 1 Fragment"
+        value = "Here will be generated numbers!"
     }
     val output: LiveData<String> = _output
+
+    fun updateOutput(output: String) {
+        _output.value = output
+    }
 }
