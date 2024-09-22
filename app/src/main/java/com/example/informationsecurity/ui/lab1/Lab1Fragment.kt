@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -46,6 +47,14 @@ class Lab1Fragment : Fragment() {
             val generator = LehmerRandomNumberGenerator()
             val generatedNumbers = generator.generateSequence(n)
             viewModel.updateOutput(generatedNumbers.joinToString("\n"))
+
+            Toast.makeText(
+                context,
+                "Generated!",
+                Toast.LENGTH_LONG
+            ).show()
+
+            Log.d("Period", "Period of generated sequence: ${generator.getPeriod()}")
         }
 
         binding.btnSaveToFile.setOnClickListener {
