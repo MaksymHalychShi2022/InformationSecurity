@@ -3,23 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_home">
+    app:startDestination="@+id/nav_lab1">
 
     <fragment
-        android:id="@+id/nav_home"
-        android:name="com.example.informationsecurity.ui.home.HomeFragment"
-        android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
+        android:id="@+id/nav_lab1"
+        android:name="com.example.informationsecurity.ui.lab1.Lab1Fragment"
+        android:label="@string/menu_lab1"
+        tools:layout="@layout/fragment_lab1" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.example.informationsecurity.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        android:id="@+id/nav_lab2"
+        android:name="com.example.informationsecurity.ui.lab2.Lab2Fragment"
+        android:label="@string/menu_lab2"
+        tools:layout="@layout/fragment_lab2" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.example.informationsecurity.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        android:id="@+id/nav_lab3"
+        android:name="com.example.informationsecurity.ui.lab3.Lab3Fragment"
+        android:label="@string/menu_lab3"
+        tools:layout="@layout/fragment_lab3" />
 </navigation>
