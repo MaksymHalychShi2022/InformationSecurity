@@ -15,4 +15,7 @@
     <string name="generate">Generate</string>
     <string name="estimate_pi">Estimate Pi</string>
     <string name="save_to_file">Save to file</string>
+    <string name="lehmer_generator">Generate using Lehmer Random Number Generator</string>
+    <string name="standard_lib_generator">Generate using Standard Kotlin Random Number Generator</string>
+    <string name="use_standard_library_implementation">Use standard library implementation</string>
 </resources>

@@ -1,10 +1,10 @@
 package com.example.informationsecurity.utils
 
 class LehmerRandomNumberGenerator(
-    private var state: Long = 64, // 64
-    private val a: Long = 8,  // 2^3
-    private val c: Long = 8,  // 8
-    val m: Long = 32767  // 2^15-1
+    private var state: Long = 64L, // 64
+    private val a: Long = 8L,  // 2^3
+    private val c: Long = 8L,  // 8
+    private val m: Long = 32767L  // 2^15-1
 ) {
 
     // Lehmer Random Number Generator formula

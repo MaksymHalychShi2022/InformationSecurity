@@ -29,6 +29,6 @@
     <fragment
         android:id="@+id/estimatePiFragment"
         android:name="com.example.informationsecurity.ui.lab1.EstimatePiFragment"
-        android:label="fragment_estimate_pi"
+        android:label="@string/menu_lab1"
         tools:layout="@layout/fragment_estimate_pi" />
 </navigation>

@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentEstimatePiBinding
 import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
 import com.example.informationsecurity.utils.RandomNumbersUtils
@@ -29,15 +30,29 @@ class EstimatePiFragment : Fragment() {
 
         binding.btnGenerate.setOnClickListener {
             val n: Long = binding.etHowManyPairsToGenerate.text.toString().toLong()
-            val estimatedPi = RandomNumbersUtils.estimatePi(
-                LehmerRandomNumberGenerator()::next,
-                totalPairs = n
-            )
+            val useStandardLib: Boolean = binding.cbUseStandardLib.isChecked
+            val estimatedPi = if (useStandardLib) {
+                RandomNumbersUtils.estimatePi(
+                    { (1L..32767L).random() }, // Lambda for standard random number generation
+                    totalPairs = n
+                )
+            } else {
+                RandomNumbersUtils.estimatePi(
+                    LehmerRandomNumberGenerator()::next, // Function reference to the Lehmer RNG's next() method
+                    totalPairs = n
+                )
+            }
             viewModel.updateEstimatedPi(estimatedPi)
         }
 
         viewModel.estimatedPi.observe(viewLifecycleOwner) {
             binding.tvOutput.text = it.toString()
+        }
+
+        binding.cbUseStandardLib.setOnCheckedChangeListener { _, isChecked ->
+            binding.tvGeneratorUsedTitle.setText(
+                if (isChecked) R.string.standard_lib_generator else R.string.lehmer_generator
+            )
         }
 
 
