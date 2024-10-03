@@ -11,8 +11,11 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
+import com.example.informationsecurity.MainViewModel
 import com.example.informationsecurity.databinding.FragmentLab2Binding
+import com.example.informationsecurity.utils.OperationState
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -22,6 +25,7 @@ class Lab2Fragment : Fragment() {
     private lateinit var fileSaveLauncher: ActivityResultLauncher<Intent>
     private lateinit var compareWithHashInFileLauncher: ActivityResultLauncher<Intent>
     private lateinit var lab2ViewModel: Lab2ViewModel
+    private val mainViewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentLab2Binding? = null
 
     // This property is only valid between onCreateView and
@@ -42,7 +46,23 @@ class Lab2Fragment : Fragment() {
                 Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            lab2ViewModel.md5(inputString.toByteArray())
+
+
+            lab2ViewModel.md5(inputString).observe(viewLifecycleOwner) { result ->
+                when (result) {
+                    is OperationState.Loading -> {
+                        mainViewModel.showProgressBar()
+                    }
+
+                    is OperationState.Success -> {
+                        mainViewModel.hideProgressBar()
+                    }
+
+                    is OperationState.Error -> {
+                        mainViewModel.hideProgressBar()
+                    }
+                }
+            }
         }
 
         binding.btnChooseFile.setOnClickListener {
@@ -166,7 +186,7 @@ class Lab2Fragment : Fragment() {
     private fun hashFIle(uri: Uri) {
         val byteArray = readFileToByteArray(uri)
         if (byteArray != null) {
-            lab2ViewModel.md5(byteArray)
+            lab2ViewModel.md5(byteArray.toString())
         }
     }
 
