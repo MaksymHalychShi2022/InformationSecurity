@@ -13,15 +13,54 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
 class Lab2ViewModel(application: Application) : AndroidViewModel(application) {
 
-
     private val _output = MutableLiveData<String>().apply {
-        value = "Output md hash will be here!"
+        value = "Here is the output !"
     }
     val output: LiveData<String> = _output
+
+    fun compareWithHashInFile(uri: Uri): LiveData<OperationState<Unit>> {
+        val operationState = MutableLiveData<OperationState<Unit>>()
+        viewModelScope.launch {
+            operationState.postValue(OperationState.Loading())  // Show loading state
+
+            withContext(Dispatchers.IO) {
+                try {
+                    // Access ContentResolver from application context
+                    val contentResolver: ContentResolver =
+                        getApplication<Application>().contentResolver
+                    val inputStream: InputStream? = contentResolver.openInputStream(uri)
+
+                    // Read the content of the file
+                    val fileContent =
+                        inputStream?.bufferedReader(StandardCharsets.UTF_8)?.use { it.readText() }
+
+                    // Retrieve the value from _output
+                    val outputValue = _output.value
+
+                    // Check if the file content matches _output.value
+                    _output.postValue(
+                        if (fileContent != null && outputValue != null && fileContent.trim() == outputValue.trim()) {
+                            "The hash is the same !"
+                        } else {
+                            "The hash is not the same !"
+                        }
+                    )
+
+                    operationState.postValue(OperationState.Success(Unit))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    operationState.postValue(OperationState.Error("Error: ${e.message}"))  // Error occurred
+                }
+            }
+        }
+        return operationState
+    }
+
 
     fun writeToFileUri(uri: Uri, content: String): LiveData<OperationState<Unit>> {
         val operationState = MutableLiveData<OperationState<Unit>>()
