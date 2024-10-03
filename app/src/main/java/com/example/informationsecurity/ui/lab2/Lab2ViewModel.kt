@@ -13,13 +13,9 @@ class Lab2ViewModel : ViewModel() {
     }
     val output: LiveData<String> = _output
 
-    fun md5(input: String) {
-        // Compute the hash in bytes
-        val digestBytes = md.digest(input.toByteArray())
-
-        // Convert the bytes to a hexadecimal string
+    fun md5(input: ByteArray) {
         _output.apply {
-            value = digestBytes.joinToString(" ") {
+            value = md.digest(input).joinToString(" ") {
                 "%02x".format(it)
             }
         }
