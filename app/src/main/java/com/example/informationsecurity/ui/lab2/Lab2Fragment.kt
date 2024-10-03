@@ -18,18 +18,20 @@ class Lab2Fragment : Fragment() {
     private val binding get() = _binding!!
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        val lab2ViewModel =
-            ViewModelProvider(this).get(Lab2ViewModel::class.java)
+        val lab2ViewModel = ViewModelProvider(this).get(Lab2ViewModel::class.java)
 
         _binding = FragmentLab2Binding.inflate(inflater, container, false)
         val root: View = binding.root
 
         binding.btnHash.setOnClickListener {
-            notImplemented()
+            val inputString = binding.etInputString.text.toString()
+            if (inputString.isEmpty()) {
+                Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            lab2ViewModel.md5(inputString)
         }
 
         binding.btnChooseFile.setOnClickListener {
