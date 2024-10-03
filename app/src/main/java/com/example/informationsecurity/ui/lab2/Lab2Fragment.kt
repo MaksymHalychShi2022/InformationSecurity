@@ -91,7 +91,10 @@ class Lab2Fragment : Fragment() {
                     uri?.let {
                         // Write data to the selected Uri
                         lab2ViewModel.output.value?.let { output ->
-                            writeToFileUri(it, output)
+                            lab2ViewModel.writeToFileUri(it, output).observe(
+                                viewLifecycleOwner,
+                                ::observeForProgressBar
+                            )
                         }
                     }
                 }
@@ -119,15 +122,6 @@ class Lab2Fragment : Fragment() {
         filePickerLauncher.launch(intent)
     }
 
-    // Opens the file picker dialog
-    private fun openFilePickerToCompareHash() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"  // You can change this MIME type if you want to filter file types
-        }
-        compareWithHashInFileLauncher.launch(intent)
-    }
-
     // Opens the file picker dialog for writing (create new file)
     private fun openFileSavePicker() {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
@@ -138,20 +132,14 @@ class Lab2Fragment : Fragment() {
         fileSaveLauncher.launch(intent)
     }
 
-    // Writes content to a selected Uri
-    private fun writeToFileUri(uri: Uri, content: String) {
-        try {
-            val outputStream: OutputStream? = requireContext().contentResolver.openOutputStream(uri)
-            outputStream?.use { it.write(content.toByteArray()) }
-
-            // Notify the user
-            Toast.makeText(requireContext(), "Saved to file!", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(requireContext(), "Error writing to file!", Toast.LENGTH_SHORT).show()
+    // Opens the file picker dialog
+    private fun openFilePickerToCompareHash() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"  // You can change this MIME type if you want to filter file types
         }
+        compareWithHashInFileLauncher.launch(intent)
     }
-
 
     // Function to read the MD5 hash from a file (given its Uri)
     private fun readMD5HashFromFile(uri: Uri): String? {

@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.InputStream
+import java.io.OutputStream
 import java.security.MessageDigest
 
 class Lab2ViewModel(application: Application) : AndroidViewModel(application) {
@@ -21,6 +22,29 @@ class Lab2ViewModel(application: Application) : AndroidViewModel(application) {
         value = "Output md hash will be here!"
     }
     val output: LiveData<String> = _output
+
+    fun writeToFileUri(uri: Uri, content: String): LiveData<OperationState<Unit>> {
+        val operationState = MutableLiveData<OperationState<Unit>>()
+        viewModelScope.launch {
+            operationState.postValue(OperationState.Loading())  // Show loading state
+
+            withContext(Dispatchers.IO) {
+                try {
+                    // Access ContentResolver from application context
+                    val contentResolver: ContentResolver =
+                        getApplication<Application>().contentResolver
+                    val outputStream: OutputStream? = contentResolver.openOutputStream(uri)
+                    outputStream?.use { it.write(content.toByteArray()) }
+                    operationState.postValue(OperationState.Success(Unit))   // File writing success
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    operationState.postValue(OperationState.Error("Failed to write to file: ${e.message}"))  // Error occurred
+                }
+            }
+
+        }
+        return operationState
+    }
 
     fun hash(input: String): LiveData<OperationState<Unit>> {
         val operationState = MutableLiveData<OperationState<Unit>>()
