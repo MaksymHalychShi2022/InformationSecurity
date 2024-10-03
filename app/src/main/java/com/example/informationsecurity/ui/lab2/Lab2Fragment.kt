@@ -14,10 +14,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.informationsecurity.databinding.FragmentLab2Binding
 import java.io.InputStream
+import java.io.OutputStream
 
 class Lab2Fragment : Fragment() {
 
     private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var fileSaveLauncher: ActivityResultLauncher<Intent>
     private lateinit var lab2ViewModel: Lab2ViewModel
     private var _binding: FragmentLab2Binding? = null
 
@@ -47,7 +49,7 @@ class Lab2Fragment : Fragment() {
         }
 
         binding.btnSaveOutputToFile.setOnClickListener {
-            notImplemented()
+            openFileSavePicker()
         }
 
         lab2ViewModel.output.observe(viewLifecycleOwner) {
@@ -82,17 +84,57 @@ class Lab2Fragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Launcher for opening a document (reading file)
         filePickerLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
                     val uri: Uri? = result.data?.data
                     uri?.let {
-                        // Process the selected file's Uri
+                        // Process the selected file's Uri for reading
                         processFile(it)
                     }
                 }
             }
+
+        // Launcher for creating a document (writing file)
+        fileSaveLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri: Uri? = result.data?.data
+                    uri?.let {
+                        // Write data to the selected Uri
+                        lab2ViewModel.output.value?.let { output ->
+                            writeToFileUri(it, output)
+                        }
+                    }
+                }
+            }
     }
+
+    // Opens the file picker dialog for writing (create new file)
+    private fun openFileSavePicker() {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/plain"  // You can change this MIME type based on your needs
+            putExtra(Intent.EXTRA_TITLE, "hash.md5")  // Suggested filename
+        }
+        fileSaveLauncher.launch(intent)
+    }
+
+    // Writes content to a selected Uri
+    private fun writeToFileUri(uri: Uri, content: String) {
+        try {
+            val outputStream: OutputStream? = requireContext().contentResolver.openOutputStream(uri)
+            outputStream?.use { it.write(content.toByteArray()) }
+
+            // Notify the user
+            Toast.makeText(requireContext(), "Saved to file!", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Error writing to file!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
     // Process the file: read its content and calculate MD5 hash
     private fun processFile(uri: Uri) {
