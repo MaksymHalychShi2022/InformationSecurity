@@ -18,4 +18,8 @@
     <string name="lehmer_generator">Generate using Lehmer Random Number Generator</string>
     <string name="standard_lib_generator">Generate using Standard Kotlin Random Number Generator</string>
     <string name="use_standard_library_implementation">Use standard library implementation</string>
+    <string name="input_string">Input string</string>
+    <string name="hash">Hash</string>
+    <string name="save_output_to_file">Save output to file</string>
+    <string name="choose_file">Choose file</string>
 </resources>

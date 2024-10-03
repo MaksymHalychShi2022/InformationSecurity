@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.informationsecurity.databinding.FragmentLab2Binding
@@ -28,11 +28,27 @@ class Lab2Fragment : Fragment() {
         _binding = FragmentLab2Binding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textGallery
-        lab2ViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
+        binding.btnHash.setOnClickListener {
+            notImplemented()
         }
+
+        binding.btnChooseFile.setOnClickListener {
+            notImplemented()
+        }
+
+        binding.btnSaveOutputToFile.setOnClickListener {
+            notImplemented()
+        }
+
+        lab2ViewModel.output.observe(viewLifecycleOwner) {
+            binding.tvOutput.text = it
+        }
+
         return root
+    }
+
+    private fun notImplemented() {
+        Toast.makeText(requireContext(), "Not implemented!", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {
