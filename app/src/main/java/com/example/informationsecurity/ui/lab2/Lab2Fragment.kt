@@ -20,6 +20,7 @@ class Lab2Fragment : Fragment() {
 
     private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var fileSaveLauncher: ActivityResultLauncher<Intent>
+    private lateinit var compareWithHashInFileLauncher: ActivityResultLauncher<Intent>
     private lateinit var lab2ViewModel: Lab2ViewModel
     private var _binding: FragmentLab2Binding? = null
 
@@ -56,28 +57,11 @@ class Lab2Fragment : Fragment() {
             binding.tvOutput.text = it
         }
 
+        binding.btnCompareWithHashInFile.setOnClickListener {
+            openFilePickerToCompareHash()
+        }
+
         return root
-    }
-
-    // Opens the file picker dialog
-    private fun openFilePicker() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"  // You can change this MIME type if you want to filter file types
-        }
-        filePickerLauncher.launch(intent)
-    }
-
-    // Reads the file content as ByteArray from Uri
-    private fun readFileToByteArray(uri: Uri): ByteArray? {
-        return try {
-            val inputStream: InputStream? = requireContext().contentResolver.openInputStream(uri)
-            inputStream?.use { it.readBytes() }
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Error reading file!", Toast.LENGTH_SHORT).show()
-            e.printStackTrace()
-            null
-        }
     }
 
     // Register the ActivityResultLauncher to open the file picker
@@ -91,7 +75,7 @@ class Lab2Fragment : Fragment() {
                     val uri: Uri? = result.data?.data
                     uri?.let {
                         // Process the selected file's Uri for reading
-                        processFile(it)
+                        hashFIle(it)
                     }
                 }
             }
@@ -109,13 +93,43 @@ class Lab2Fragment : Fragment() {
                     }
                 }
             }
+
+        // Launcher for comparing hash in file with those in buffer (reading file)
+        compareWithHashInFileLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri: Uri? = result.data?.data
+                    uri?.let {
+                        // Write data to the selected Uri
+                        compareWithHashInFile(it)
+                    }
+                }
+            }
+    }
+
+    // Opens the file picker dialog
+    private fun openFilePicker() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"  // You can change this MIME type if you want to filter file types
+        }
+        filePickerLauncher.launch(intent)
+    }
+
+    // Opens the file picker dialog
+    private fun openFilePickerToCompareHash() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"  // You can change this MIME type if you want to filter file types
+        }
+        compareWithHashInFileLauncher.launch(intent)
     }
 
     // Opens the file picker dialog for writing (create new file)
     private fun openFileSavePicker() {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "text/plain"  // You can change this MIME type based on your needs
+            type = "application/octet-stream"  // You can change this MIME type based on your needs
             putExtra(Intent.EXTRA_TITLE, "hash.md5")  // Suggested filename
         }
         fileSaveLauncher.launch(intent)
@@ -135,12 +149,52 @@ class Lab2Fragment : Fragment() {
         }
     }
 
+    // Reads the file content as ByteArray from Uri
+    private fun readFileToByteArray(uri: Uri): ByteArray? {
+        return try {
+            val inputStream: InputStream? = requireContext().contentResolver.openInputStream(uri)
+            inputStream?.use { it.readBytes() }
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Error reading file!", Toast.LENGTH_SHORT).show()
+            e.printStackTrace()
+            null
+        }
+    }
+
 
     // Process the file: read its content and calculate MD5 hash
-    private fun processFile(uri: Uri) {
+    private fun hashFIle(uri: Uri) {
         val byteArray = readFileToByteArray(uri)
         if (byteArray != null) {
             lab2ViewModel.md5(byteArray)
+        }
+    }
+
+    // Function to read the MD5 hash from a file (given its Uri)
+    private fun readMD5HashFromFile(uri: Uri): String? {
+        return try {
+            // Use the ContentResolver to open the input stream for the file Uri
+            val inputStream = requireContext().contentResolver.openInputStream(uri)
+            inputStream?.use {
+                // Read the contents of the file as text and trim any excess whitespace
+                it.bufferedReader().readText().trim()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null  // Return null in case of an error
+        }
+    }
+
+    private fun compareWithHashInFile(uri: Uri) {
+        val hash = readMD5HashFromFile(uri)
+        if (hash != null) {
+            lab2ViewModel.output.value?.let {
+                if (it == hash) {
+                    Toast.makeText(requireContext(), "Correct!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "Wrong!", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
