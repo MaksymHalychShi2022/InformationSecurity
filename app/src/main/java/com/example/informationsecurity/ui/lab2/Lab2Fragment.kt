@@ -16,7 +16,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.informationsecurity.MainViewModel
 import com.example.informationsecurity.databinding.FragmentLab2Binding
 import com.example.informationsecurity.utils.OperationState
-import java.io.InputStream
 import java.io.OutputStream
 
 class Lab2Fragment : Fragment() {
@@ -47,40 +46,24 @@ class Lab2Fragment : Fragment() {
                 return@setOnClickListener
             }
 
-
-            lab2ViewModel.md5(inputString).observe(viewLifecycleOwner) { result ->
-                when (result) {
-                    is OperationState.Loading -> {
-                        mainViewModel.showProgressBar()
-                    }
-
-                    is OperationState.Success -> {
-                        mainViewModel.hideProgressBar()
-                    }
-
-                    is OperationState.Error -> {
-                        mainViewModel.hideProgressBar()
-                    }
-                }
-            }
+            lab2ViewModel.hash(inputString).observe(viewLifecycleOwner, ::observeForProgressBar)
         }
 
         binding.btnChooseFile.setOnClickListener {
-            openFilePicker()  // Open the file picker when button is clicked
+            getFileHash()  // Open the file picker when button is clicked
         }
 
         binding.btnSaveOutputToFile.setOnClickListener {
             openFileSavePicker()
         }
 
-        lab2ViewModel.output.observe(viewLifecycleOwner) {
-            binding.tvOutput.text = it
-        }
-
         binding.btnCompareWithHashInFile.setOnClickListener {
             openFilePickerToCompareHash()
         }
 
+        lab2ViewModel.output.observe(viewLifecycleOwner) {
+            binding.tvOutput.text = it
+        }
         return root
     }
 
@@ -95,7 +78,7 @@ class Lab2Fragment : Fragment() {
                     val uri: Uri? = result.data?.data
                     uri?.let {
                         // Process the selected file's Uri for reading
-                        hashFIle(it)
+                        lab2ViewModel.hash(uri).observe(viewLifecycleOwner, ::observeForProgressBar)
                     }
                 }
             }
@@ -128,7 +111,7 @@ class Lab2Fragment : Fragment() {
     }
 
     // Opens the file picker dialog
-    private fun openFilePicker() {
+    private fun getFileHash() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"  // You can change this MIME type if you want to filter file types
@@ -169,26 +152,6 @@ class Lab2Fragment : Fragment() {
         }
     }
 
-    // Reads the file content as ByteArray from Uri
-    private fun readFileToByteArray(uri: Uri): ByteArray? {
-        return try {
-            val inputStream: InputStream? = requireContext().contentResolver.openInputStream(uri)
-            inputStream?.use { it.readBytes() }
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Error reading file!", Toast.LENGTH_SHORT).show()
-            e.printStackTrace()
-            null
-        }
-    }
-
-
-    // Process the file: read its content and calculate MD5 hash
-    private fun hashFIle(uri: Uri) {
-        val byteArray = readFileToByteArray(uri)
-        if (byteArray != null) {
-            lab2ViewModel.md5(byteArray.toString())
-        }
-    }
 
     // Function to read the MD5 hash from a file (given its Uri)
     private fun readMD5HashFromFile(uri: Uri): String? {
@@ -214,6 +177,18 @@ class Lab2Fragment : Fragment() {
                 } else {
                     Toast.makeText(requireContext(), "Wrong!", Toast.LENGTH_SHORT).show()
                 }
+            }
+        }
+    }
+
+    private fun observeForProgressBar(result: OperationState<*>) {
+        when (result) {
+            is OperationState.Loading -> {
+                mainViewModel.showProgressBar()
+            }
+
+            is OperationState.Success, is OperationState.Error -> {
+                mainViewModel.hideProgressBar()
             }
         }
     }
