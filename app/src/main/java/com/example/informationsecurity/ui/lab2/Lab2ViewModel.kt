@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.informationsecurity.utils.MD5
 import com.example.informationsecurity.utils.OperationState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,7 +91,8 @@ class Lab2ViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             operationState.postValue(OperationState.Loading())
             try {
-                val md = MessageDigest.getInstance("MD5")
+//                val md = MessageDigest.getInstance("MD5")
+                val md = MD5()
                 val hash = md.digest(input.toByteArray()).joinToString("") {
                     "%02x".format(it)
                 }
@@ -114,7 +116,7 @@ class Lab2ViewModel(application: Application) : AndroidViewModel(application) {
 
             try {
                 // Initialize the MD5 digest algorithm
-                val md = MessageDigest.getInstance("MD5")
+                val md = MD5()
 
                 // Process the file in chunks and update the digest
                 processFileInChunks(uri, md)
@@ -140,6 +142,23 @@ class Lab2ViewModel(application: Application) : AndroidViewModel(application) {
 
     // Function to process a file in chunks and update the MessageDigest
     private suspend fun processFileInChunks(uri: Uri, digest: MessageDigest) {
+        val contentResolver: ContentResolver = getApplication<Application>().contentResolver
+
+        withContext(Dispatchers.IO) {
+            val inputStream: InputStream? = contentResolver.openInputStream(uri)
+            inputStream?.use { stream ->
+                val buffer = ByteArray(8192)  // 8 KB buffer size
+                var bytesRead: Int
+
+                // Read the file in chunks and update the digest
+                while (stream.read(buffer).also { bytesRead = it } != -1) {
+                    digest.update(buffer, 0, bytesRead)  // Update digest with each chunk
+                }
+            } ?: throw Exception("Failed to open input stream")
+        }
+    }
+
+    private suspend fun processFileInChunks(uri: Uri, digest: MD5) {
         val contentResolver: ContentResolver = getApplication<Application>().contentResolver
 
         withContext(Dispatchers.IO) {
