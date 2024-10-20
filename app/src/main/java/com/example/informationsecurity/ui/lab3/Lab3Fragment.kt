@@ -20,7 +20,10 @@ import com.example.informationsecurity.utils.OperationState
 class Lab3Fragment : Fragment() {
 
     private lateinit var encryptFilePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var encryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var decryptFilePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var decryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
+
     private var _binding: FragmentLab3Binding? = null
     private lateinit var lab3ViewModel: Lab3ViewModel
     private val mainViewModel: MainViewModel by activityViewModels()
@@ -59,30 +62,72 @@ class Lab3Fragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        var inputUri: Uri? = null
+
         encryptFilePickerLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Process the selected file's Uri for reading
-                        lab3ViewModel.encryptFile(uri).observe(viewLifecycleOwner) { result ->
-                            observeForProgressBar(result, "Encrypted!")
+                    inputUri = result.data?.data
+
+                    inputUri?.let {
+                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "application/octet-stream" // MIME type for binary files
+                            putExtra(
+                                Intent.EXTRA_TITLE, "${lab3ViewModel.getFileName(it)}.enc"
+                            ) // Default file name
                         }
+                        encryptOutputFilePickerLauncher.launch(intent)
                     }
                 }
             }
 
+        encryptOutputFilePickerLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val outputUri: Uri? = result.data?.data
+                    outputUri?.let {
+                        // Process the selected file's Uri for reading
+                        lab3ViewModel.encryptFile(inputUri!!, it)
+                            .observe(viewLifecycleOwner) { result ->
+                                observeForProgressBar(result, "Encrypted!")
+                            }
+                    }
+                }
+                inputUri = null // so it could not be used in later calls
+            }
+
+
         decryptFilePickerLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    inputUri = result.data?.data
+                    inputUri?.let {
+                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "application/octet-stream" // MIME type for binary files
+                            putExtra(
+                                Intent.EXTRA_TITLE,
+                                lab3ViewModel.getFileName(it)?.removeSuffix(".enc")
+                            ) // Default file name
+                        }
+                        encryptOutputFilePickerLauncher.launch(intent)
+                    }
+                }
+            }
+
+        decryptOutputFilePickerLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
                     val uri: Uri? = result.data?.data
                     uri?.let {
-                        // Process the selected file's Uri for reading
-                        lab3ViewModel.decryptFile(uri).observe(viewLifecycleOwner) { result ->
-                            observeForProgressBar(result, "Decrypted!")
-                        }
+                        lab3ViewModel.decryptFile(inputUri!!, it)
+                            .observe(viewLifecycleOwner) { result ->
+                                observeForProgressBar(result, "Decrypted!")
+                            }
                     }
                 }
+                inputUri = null
             }
     }
 
