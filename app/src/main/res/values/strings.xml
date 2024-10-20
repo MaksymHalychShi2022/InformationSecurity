@@ -24,4 +24,7 @@
     <string name="choose_file">Choose file</string>
     <string name="check_file_hash">Check file hash</string>
     <string name="compare_with_hash_in_file">Compare with hash in file</string>
+    <string name="passphrase">Passphrase</string>
+    <string name="encrypt_file">Encrypt File</string>
+    <string name="decrypt_file">Decrypt File</string>
 </resources>
