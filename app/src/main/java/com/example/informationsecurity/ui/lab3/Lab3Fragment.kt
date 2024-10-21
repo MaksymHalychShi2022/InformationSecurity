@@ -73,9 +73,7 @@ class Lab3Fragment : Fragment() {
                         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                             addCategory(Intent.CATEGORY_OPENABLE)
                             type = "application/octet-stream" // MIME type for binary files
-                            putExtra(
-                                Intent.EXTRA_TITLE, "${lab3ViewModel.getFileName(it)}.enc"
-                            ) // Default file name
+                            putExtra(Intent.EXTRA_TITLE, "encrypted.txt") // Default file name
                         }
                         encryptOutputFilePickerLauncher.launch(intent)
                     }
@@ -106,12 +104,9 @@ class Lab3Fragment : Fragment() {
                         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                             addCategory(Intent.CATEGORY_OPENABLE)
                             type = "application/octet-stream" // MIME type for binary files
-                            putExtra(
-                                Intent.EXTRA_TITLE,
-                                lab3ViewModel.getFileName(it)?.removeSuffix(".enc")
-                            ) // Default file name
+                            putExtra(Intent.EXTRA_TITLE, "decrypted.txt") // Default file name
                         }
-                        encryptOutputFilePickerLauncher.launch(intent)
+                        decryptOutputFilePickerLauncher.launch(intent)
                     }
                 }
             }

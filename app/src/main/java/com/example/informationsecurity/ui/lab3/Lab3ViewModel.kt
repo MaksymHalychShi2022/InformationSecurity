@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -14,14 +15,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.bouncycastle.crypto.engines.RC564Engine
+import org.bouncycastle.crypto.modes.CBCBlockCipher
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher
+import org.bouncycastle.crypto.params.ParametersWithIV
 import org.bouncycastle.crypto.params.RC5Parameters
 import java.io.FileNotFoundException
 import java.security.MessageDigest
+import java.security.SecureRandom
 
 class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
     private val rounds: Int = 12  // Use the rounds parameter
-    private val keyLength: Int = 16 // 128-bit key length
+    private val keyLength: Int = 8 // 128-bit key length
     private val contentResolver: ContentResolver = getApplication<Application>().contentResolver
 
     private val _passphrase = MutableLiveData<String>().apply {
@@ -36,30 +40,10 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
         return hash.copyOf(keyLength) // Truncate or pad to keyLength
     }
 
-    private fun createOutputUri(inputUri: Uri, isEncryption: Boolean): Uri? {
-        // Get a DocumentFile representing the inputUri
-        val inputDocumentFile = DocumentFile.fromSingleUri(getApplication(), inputUri)
-        val parentDocumentFile = inputDocumentFile?.parentFile
-
-        // Check if the parent directory is available and writable
-        if (parentDocumentFile == null || !parentDocumentFile.canWrite()) {
-            return null
-        }
-
-        // Set the output file name based on the operation
-        val outputFileName = if (isEncryption) {
-            "${inputDocumentFile.name}.enc"
-        } else {
-            inputDocumentFile.name?.removeSuffix(".enc") ?: return null
-        }
-
-        // Create a new file in the same directory with the new name
-        val outputDocumentFile = parentDocumentFile.createFile(
-            "application/octet-stream", // MIME type for binary data
-            outputFileName
-        )
-
-        return outputDocumentFile?.uri
+    private fun generateIV(): ByteArray {
+        val iv = ByteArray(keyLength * 2) // RC5-64 uses an 8-byte block size
+        SecureRandom().nextBytes(iv)
+        return iv
     }
 
 
@@ -75,9 +59,31 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
             withContext(Dispatchers.IO) {
                 try {
                     val key = generateKey(_passphrase.value ?: "")
-                    val rc5Cipher = PaddedBufferedBlockCipher(RC564Engine())
-                    val rc5Params = RC5Parameters(key, rounds)
-                    rc5Cipher.init(encrypt, rc5Params)
+
+                    // Generate or retrieve IV based on encryption or decryption
+                    val iv: ByteArray = if (encrypt) {
+                        generateIV() // Generate a new IV for encryption
+                    } else {
+                        // Retrieve the IV from the beginning of the input stream during decryption
+                        val inputStream = contentResolver.openInputStream(inputUri)
+                            ?: throw FileNotFoundException("Failed to open input stream for URI: $inputUri")
+
+                        val ivBuffer = ByteArray(keyLength * 2) // 8-byte IV for RC5-64
+                        inputStream.read(ivBuffer)
+                        inputStream.close()
+                        ivBuffer
+                    }
+
+                    if (iv.size != keyLength * 2) {
+                        throw IllegalArgumentException("IV must be 8 bytes long, but got ${iv.size} bytes")
+                    }
+                    if (key.size != keyLength) {
+                        throw IllegalArgumentException("key must be 8 bytes long, but got ${iv.size} bytes")
+                    }
+                    val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(RC564Engine()))
+                    Log.d("RC5-CBC", "Block size: ${cipher.blockSize}, IV size: ${iv.size}")
+                    val params = ParametersWithIV(RC5Parameters(key, rounds), iv)
+                    cipher.init(encrypt, params)
 
                     // Open input and output streams using the provided URIs
                     val inputStream = contentResolver.openInputStream(inputUri)
@@ -86,18 +92,39 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
                     val outputStream = contentResolver.openOutputStream(outputUri)
                         ?: throw FileNotFoundException("Failed to open output stream for URI: $outputUri")
 
+                    // Encryption or decryption logic with IV handling
                     inputStream.use { input ->
                         outputStream.use { output ->
-                            val buffer = ByteArray(1024)
-                            val outputBuffer = ByteArray(rc5Cipher.getOutputSize(buffer.size))
+                            if (encrypt) {
+                                // Write the IV to the output stream for later use in decryption
+                                output.write(iv)
+                            } else {
+                                // Skip the first 8 bytes of the input stream (IV) for decryption
+                                input.skip(keyLength.toLong() * 2)
+                            }
+
+                            val inputBuffer = ByteArray(1024)
+                            val outputBuffer = ByteArray(cipher.getOutputSize(inputBuffer.size))
                             var bytesRead: Int
 
-                            while (input.read(buffer).also { bytesRead = it } != -1) {
-                                val outputLength = rc5Cipher.processBytes(buffer, 0, bytesRead, outputBuffer, 0)
-                                output.write(outputBuffer, 0, outputLength)
+                            while (input.read(inputBuffer).also { bytesRead = it } != -1) {
+                                val outputLength = cipher.processBytes(
+                                    inputBuffer,
+                                    0,
+                                    bytesRead,
+                                    outputBuffer,
+                                    0
+                                )
+                                if (outputLength > 0) {
+                                    output.write(outputBuffer, 0, outputLength)
+                                }
                             }
-                            val finalOutputLength = rc5Cipher.doFinal(outputBuffer, 0)
-                            output.write(outputBuffer, 0, finalOutputLength)
+
+                            // Write final bytes
+                            val finalOutputLength = cipher.doFinal(outputBuffer, 0)
+                            if (finalOutputLength > 0) {
+                                output.write(outputBuffer, 0, finalOutputLength)
+                            }
                         }
                     }
 
@@ -122,24 +149,5 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
     // Example usage for decryption
     fun decryptFile(inputUri: Uri, outputUri: Uri): LiveData<OperationState<Unit>> {
         return processFile(inputUri, outputUri, false)
-    }
-
-
-    fun getFileName(uri: Uri): String? {
-        var fileName: String? = null
-        val cursor = getApplication<Application>().contentResolver.query(
-            uri,
-            arrayOf(OpenableColumns.DISPLAY_NAME),
-            null,
-            null,
-            null
-        )
-
-        cursor?.use {
-            if (it.moveToFirst()) {
-                fileName = it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
-            }
-        }
-        return fileName
     }
 }
