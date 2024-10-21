@@ -61,6 +61,7 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
             operationState.postValue(OperationState.Loading())
 
             withContext(Dispatchers.IO) {
+                val outputFile = DocumentFile.fromSingleUri(getApplication(), outputUri)
                 try {
                     val key = generateKey(_passphrase.value ?: "")
 
@@ -135,12 +136,18 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
                     operationState.postValue(OperationState.Success(Unit))
                 } catch (e: org.bouncycastle.crypto.InvalidCipherTextException) {
                     e.printStackTrace()
+
+                    outputFile?.delete()
                     operationState.postValue(OperationState.Error("Decryption failed: Invalid key or padding"))
                 } catch (e: FileNotFoundException) {
                     e.printStackTrace()
+
+                    outputFile?.delete()
                     operationState.postValue(OperationState.Error("File not found: ${e.message}"))
                 } catch (e: Exception) {
                     e.printStackTrace()
+
+                    outputFile?.delete()
                     operationState.postValue(OperationState.Error("Error: ${e.message}"))
                 }
             }
