@@ -8,6 +8,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
+import com.example.informationsecurity.utils.MD5
 import com.example.informationsecurity.utils.OperationState
 import com.example.informationsecurity.utils.RC5
 import kotlinx.coroutines.Dispatchers
@@ -18,8 +20,6 @@ import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher
 import org.bouncycastle.crypto.params.ParametersWithIV
 import org.bouncycastle.crypto.params.RC5Parameters
 import java.io.FileNotFoundException
-import java.security.MessageDigest
-import java.security.SecureRandom
 
 class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
     private val rounds: Int = 12  // Use the rounds parameter
@@ -37,14 +37,18 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
 
     // Generate MD5 hash from passphrase
     private fun generateKey(passphrase: String): ByteArray {
-        val md5Digest = MessageDigest.getInstance("MD5")
+        val md5Digest = MD5()
         val hash = md5Digest.digest(passphrase.toByteArray(Charsets.UTF_8))
         return hash.copyOf(keyLength) // Truncate or pad to keyLength
     }
 
     private fun generateIV(): ByteArray {
         val iv = ByteArray(keyLength * 2) // RC5-64 uses an 8-byte block size
-        SecureRandom().nextBytes(iv)
+        val generator = LehmerRandomNumberGenerator()
+        for (i in iv.indices) {
+            // Generate the next random number and convert it to a byte (taking the least significant byte)
+            iv[i] = (generator.next() and 0xFF).toByte()
+        }
         return iv
     }
 
