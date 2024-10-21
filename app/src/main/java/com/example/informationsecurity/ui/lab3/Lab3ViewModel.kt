@@ -3,18 +3,16 @@ package com.example.informationsecurity.ui.lab3
 import android.app.Application
 import android.content.ContentResolver
 import android.net.Uri
-import android.provider.OpenableColumns
-import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.informationsecurity.utils.OperationState
+import com.example.informationsecurity.utils.RC5
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.bouncycastle.crypto.engines.RC564Engine
 import org.bouncycastle.crypto.modes.CBCBlockCipher
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher
 import org.bouncycastle.crypto.params.ParametersWithIV
@@ -85,8 +83,7 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
                     if (key.size != keyLength) {
                         throw IllegalArgumentException("key must be 8 bytes long, but got ${iv.size} bytes")
                     }
-                    val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(RC564Engine()))
-                    Log.d("RC5-CBC", "Block size: ${cipher.blockSize}, IV size: ${iv.size}")
+                    val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(RC5()))
                     val params = ParametersWithIV(RC5Parameters(key, rounds), iv)
                     cipher.init(encrypt, params)
 
