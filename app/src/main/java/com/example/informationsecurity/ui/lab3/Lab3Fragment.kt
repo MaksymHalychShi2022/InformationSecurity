@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -39,6 +41,27 @@ class Lab3Fragment : Fragment() {
 
         _binding = FragmentLab3Binding.inflate(inflater, container, false)
         val root: View = binding.root
+
+        lab3ViewModel.passphrase.observe(viewLifecycleOwner) {
+            if (binding.etPassphrase.text.toString() != it) {
+                binding.etPassphrase.setText(it)
+                binding.etPassphrase.setSelection(it.length) // Move cursor to the end
+            }
+        }
+
+        // Add a TextWatcher to listen for key taps and update ViewModel
+        binding.etPassphrase.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val newText = s.toString()
+                if (newText != lab3ViewModel.passphrase.value) {
+                    lab3ViewModel.updatePassphrase(newText) // Update ViewModel
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
 
         binding.btnEncryptFile.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {

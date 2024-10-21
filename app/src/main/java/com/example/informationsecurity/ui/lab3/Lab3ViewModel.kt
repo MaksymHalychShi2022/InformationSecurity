@@ -33,6 +33,10 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
     }
     val passphrase: LiveData<String> = _passphrase
 
+    fun updatePassphrase(str: String?) {
+        _passphrase.postValue(str)
+    }
+
     // Generate MD5 hash from passphrase
     private fun generateKey(passphrase: String): ByteArray {
         val md5Digest = MessageDigest.getInstance("MD5")
@@ -129,6 +133,9 @@ class Lab3ViewModel(application: Application) : AndroidViewModel(application) {
                     }
 
                     operationState.postValue(OperationState.Success(Unit))
+                } catch (e: org.bouncycastle.crypto.InvalidCipherTextException) {
+                    e.printStackTrace()
+                    operationState.postValue(OperationState.Error("Decryption failed: Invalid key or padding"))
                 } catch (e: FileNotFoundException) {
                     e.printStackTrace()
                     operationState.postValue(OperationState.Error("File not found: ${e.message}"))
