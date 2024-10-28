@@ -54,4 +54,7 @@ dependencies {
 
     // Add fragment-ktx
     implementation("androidx.fragment:fragment-ktx:1.6.1")
+
+    // Base Bouncy Castle provider for cryptography (for RC5)
+    implementation("org.bouncycastle:bcprov-jdk15to18:1.75")
 }
