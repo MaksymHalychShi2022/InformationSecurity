@@ -24,6 +24,12 @@ class Lab4Fragment : Fragment() {
     private lateinit var savePublicKeyLauncher: ActivityResultLauncher<Intent>
     private lateinit var savePrivateKeyLauncher: ActivityResultLauncher<Intent>
 
+    private lateinit var encryptFilePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var encryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var decryptFilePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var decryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
+
+
     private var _binding: FragmentLab4Binding? = null
     private lateinit var lab4ViewModel: Lab4ViewModel
     private val mainViewModel: MainViewModel by activityViewModels()
@@ -92,6 +98,24 @@ class Lab4Fragment : Fragment() {
             loadPrivateKeyLauncher.launch(intent)
         }
 
+        binding.btnEncryptFile.setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"  // You can change this MIME type if you want to filter file types
+            }
+            encryptFilePickerLauncher.launch(intent)
+        }
+
+
+        binding.btnDecryptFile.setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"  // You can change this MIME type if you want to filter file types
+            }
+            decryptFilePickerLauncher.launch(intent)
+        }
+
+
         return root
     }
 
@@ -151,6 +175,68 @@ class Lab4Fragment : Fragment() {
                 }
             }
 
+        var inputUri: Uri? = null
+
+        encryptFilePickerLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    inputUri = result.data?.data
+
+                    inputUri?.let {
+                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "application/octet-stream" // MIME type for binary files
+                            putExtra(Intent.EXTRA_TITLE, "encrypted.txt") // Default file name
+                        }
+                        encryptOutputFilePickerLauncher.launch(intent)
+                    }
+                }
+            }
+
+        encryptOutputFilePickerLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val outputUri: Uri? = result.data?.data
+                    outputUri?.let {
+                        // Process the selected file's Uri for reading
+                        lab4ViewModel.encryptFile(inputUri!!, it)
+                            .observe(viewLifecycleOwner) { result ->
+                                observeForProgressBar(result, "Encrypted!")
+                            }
+                    }
+                }
+                inputUri = null // so it could not be used in later calls
+            }
+
+
+        decryptFilePickerLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    inputUri = result.data?.data
+                    inputUri?.let {
+                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "application/octet-stream" // MIME type for binary files
+                            putExtra(Intent.EXTRA_TITLE, "decrypted.txt") // Default file name
+                        }
+                        decryptOutputFilePickerLauncher.launch(intent)
+                    }
+                }
+            }
+
+        decryptOutputFilePickerLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri: Uri? = result.data?.data
+                    uri?.let {
+                        lab4ViewModel.decryptFile(inputUri!!, it)
+                            .observe(viewLifecycleOwner) { result ->
+                                observeForProgressBar(result, "Decrypted!")
+                            }
+                    }
+                }
+                inputUri = null
+            }
     }
 
 

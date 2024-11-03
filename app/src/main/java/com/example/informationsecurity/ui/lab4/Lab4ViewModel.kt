@@ -1,27 +1,19 @@
 package com.example.informationsecurity.ui.lab4
 
 import android.app.Application
-import android.content.ContentResolver
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
-import com.example.informationsecurity.utils.MD5
 import com.example.informationsecurity.utils.OperationState
-import com.example.informationsecurity.utils.RC5
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.bouncycastle.crypto.modes.CBCBlockCipher
-import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher
-import org.bouncycastle.crypto.params.ParametersWithIV
-import org.bouncycastle.crypto.params.RC5Parameters
-import java.io.FileNotFoundException
+import java.security.KeyFactory
 import java.security.KeyPairGenerator
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
+import javax.crypto.Cipher
 
 class Lab4ViewModel(application: Application) : AndroidViewModel(application) {
     private val _publicKey = MutableLiveData<String>().apply {
@@ -152,4 +144,86 @@ class Lab4ViewModel(application: Application) : AndroidViewModel(application) {
 
         return operationState
     }
+
+
+    fun encryptFile(inputUri: Uri, outputUri: Uri): LiveData<OperationState<Unit>> {
+        val operationState = MutableLiveData<OperationState<Unit>>()
+
+        viewModelScope.launch {
+            operationState.postValue(OperationState.Loading())
+            try {
+                val publicKeyString = _publicKey.value ?: throw Exception("Public key is not available")
+                val publicKeyBytes = Base64.getDecoder().decode(publicKeyString)
+                val keySpec = X509EncodedKeySpec(publicKeyBytes)
+                val keyFactory = KeyFactory.getInstance("RSA")
+                val publicKey = keyFactory.generatePublic(keySpec)
+
+                val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+                cipher.init(Cipher.ENCRYPT_MODE, publicKey)
+
+                val contentResolver = getApplication<Application>().contentResolver
+                val inputStream = contentResolver.openInputStream(inputUri)
+                val outputStream = contentResolver.openOutputStream(outputUri)
+
+                inputStream?.use { input ->
+                    outputStream?.use { output ->
+                        val buffer = ByteArray(245) // RSA can handle up to 245 bytes for 2048-bit keys
+                        var bytesRead: Int
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            val actualData = buffer.copyOfRange(0, bytesRead)
+                            val encryptedChunk = cipher.doFinal(actualData)
+                            output.write(encryptedChunk)
+                        }
+                        operationState.postValue(OperationState.Success(Unit))
+                    } ?: throw Exception("Unable to open output stream")
+                } ?: throw Exception("Unable to open input stream")
+
+            } catch (e: Exception) {
+                operationState.postValue(OperationState.Error("Error encrypting file: ${e.message}"))
+            }
+        }
+
+        return operationState
+    }
+
+    fun decryptFile(inputUri: Uri, outputUri: Uri): LiveData<OperationState<Unit>> {
+        val operationState = MutableLiveData<OperationState<Unit>>()
+
+        viewModelScope.launch {
+            operationState.postValue(OperationState.Loading())
+            try {
+                val privateKeyString = _privateKey.value ?: throw Exception("Private key is not available")
+                val privateKeyBytes = Base64.getDecoder().decode(privateKeyString)
+                val keySpec = PKCS8EncodedKeySpec(privateKeyBytes)
+                val keyFactory = KeyFactory.getInstance("RSA")
+                val privateKey = keyFactory.generatePrivate(keySpec)
+
+                val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+                cipher.init(Cipher.DECRYPT_MODE, privateKey)
+
+                val contentResolver = getApplication<Application>().contentResolver
+                val inputStream = contentResolver.openInputStream(inputUri)
+                val outputStream = contentResolver.openOutputStream(outputUri)
+
+                inputStream?.use { input ->
+                    outputStream?.use { output ->
+                        val buffer = ByteArray(256) // Encrypted block size for 2048-bit keys
+                        var bytesRead: Int
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            val actualData = buffer.copyOfRange(0, bytesRead)
+                            val decryptedChunk = cipher.doFinal(actualData)
+                            output.write(decryptedChunk)
+                        }
+                        operationState.postValue(OperationState.Success(Unit))
+                    } ?: throw Exception("Unable to open output stream")
+                } ?: throw Exception("Unable to open input stream")
+
+            } catch (e: Exception) {
+                operationState.postValue(OperationState.Error("Error decrypting file: ${e.message}"))
+            }
+        }
+
+        return operationState
+    }
+
 }
