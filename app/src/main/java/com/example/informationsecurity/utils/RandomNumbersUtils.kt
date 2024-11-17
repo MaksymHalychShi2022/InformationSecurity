@@ -23,10 +23,16 @@ object RandomNumbersUtils {
             }
         }
 
+        // If no coprime pairs are found, return NaN
+        if (coprimeCount == 0) {
+            return Double.NaN
+        }
+
         // Calculate the probability of two numbers being coprime
         val probabilityCoprime = coprimeCount.toDouble() / totalPairs
 
         // Use Cesaro's theorem to estimate Pi
         return sqrt(6.0 / probabilityCoprime)
     }
+
 }

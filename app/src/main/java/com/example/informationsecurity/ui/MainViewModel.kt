@@ -1,4 +1,4 @@
-package com.example.informationsecurity
+package com.example.informationsecurity.ui
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

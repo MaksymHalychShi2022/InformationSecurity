@@ -1,4 +1,4 @@
-package com.example.informationsecurity.ui.lab1
+package com.example.informationsecurity.ui.fragments.lab1
 
 import android.os.Bundle
 import android.view.LayoutInflater

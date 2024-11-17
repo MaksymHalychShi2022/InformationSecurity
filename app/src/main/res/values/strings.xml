@@ -27,4 +27,10 @@
     <string name="passphrase">Passphrase</string>
     <string name="encrypt_file">Encrypt File</string>
     <string name="decrypt_file">Decrypt File</string>
+    <string name="menu_lab4">Lab 4</string>
+    <string name="load_public_key">Load public key</string>
+    <string name="load_private_key">Load private key</string>
+    <string name="generate_keys">Generate</string>
+    <string name="save_public_key">Save Public Key</string>
+    <string name="save_private_key">Save Private Key</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.example.informationsecurity.ui.lab3
+package com.example.informationsecurity.ui.fragments.lab3
 
 import android.app.Activity
 import android.content.Intent
@@ -15,7 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
-import com.example.informationsecurity.MainViewModel
+import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.databinding.FragmentLab3Binding
 import com.example.informationsecurity.utils.OperationState
 
