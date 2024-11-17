@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("jacoco") // Add this plugin
 }
 
 android {
@@ -37,6 +38,43 @@ android {
         viewBinding = true
     }
 }
+tasks.withType<Test> {
+    extensions.configure(JacocoTaskExtension::class.java) {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*") // Optional: Exclude problematic classes
+    }
+}
+
+
+jacoco {
+    toolVersion = "0.8.8"
+}
+
+tasks.register("jacocoTestReport", JacocoReport::class) {
+    dependsOn("testDebugUnitTest") // Replace with your specific test task name if different
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+    classDirectories.setFrom(
+        fileTree("build/tmp/kotlin-classes/debug/") {
+            exclude(
+                "**/R.class",
+                "**/R$*.class",
+                "**/BuildConfig.*",
+                "**/Manifest*.*",
+                "**/databinding/**",
+                "**/android/databinding/**",
+                "**/androidx/databinding/**",
+                "com/example/informationsecurity/ui/**"
+            )
+        }
+    )
+    sourceDirectories.setFrom(files("src/main/java"))
+    executionData.setFrom(files("${buildDir}/jacoco/testDebugUnitTest.exec"))
+}
+
 
 dependencies {
 
@@ -57,4 +95,9 @@ dependencies {
 
     // Base Bouncy Castle provider for cryptography (for RC5)
     implementation("org.bouncycastle:bcprov-jdk15to18:1.75")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0") // Optional for modern JUnit 5
+    testImplementation("org.mockito:mockito-core:4.11.0")
+    testImplementation("org.robolectric:robolectric:4.10") // For Android components in unit tests
+
 }
