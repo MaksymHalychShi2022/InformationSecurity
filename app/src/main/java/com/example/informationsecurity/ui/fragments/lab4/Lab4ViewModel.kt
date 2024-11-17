@@ -1,4 +1,4 @@
-package com.example.informationsecurity.ui.lab4
+package com.example.informationsecurity.ui.fragments.lab4
 
 import android.app.Application
 import android.net.Uri

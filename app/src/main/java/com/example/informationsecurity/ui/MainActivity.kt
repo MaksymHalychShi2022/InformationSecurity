@@ -1,4 +1,4 @@
-package com.example.informationsecurity
+package com.example.informationsecurity.ui
 
 import android.os.Bundle
 import android.view.Menu
@@ -13,9 +13,8 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
+import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.ActivityMainBinding
-import com.example.informationsecurity.ui.lab2.Lab2ViewModel
 
 class MainActivity : AppCompatActivity() {
 

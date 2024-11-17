@@ -1,11 +1,9 @@
-package com.example.informationsecurity.ui.lab3
+package com.example.informationsecurity.ui.fragments.lab4
 
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,19 +13,25 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
-import com.example.informationsecurity.MainViewModel
-import com.example.informationsecurity.databinding.FragmentLab3Binding
+import com.example.informationsecurity.ui.MainViewModel
+import com.example.informationsecurity.databinding.FragmentLab4Binding
 import com.example.informationsecurity.utils.OperationState
 
-class Lab3Fragment : Fragment() {
+class Lab4Fragment : Fragment() {
+
+    private lateinit var loadPublicKeyLauncher: ActivityResultLauncher<Intent>
+    private lateinit var loadPrivateKeyLauncher: ActivityResultLauncher<Intent>
+    private lateinit var savePublicKeyLauncher: ActivityResultLauncher<Intent>
+    private lateinit var savePrivateKeyLauncher: ActivityResultLauncher<Intent>
 
     private lateinit var encryptFilePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var encryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var decryptFilePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var decryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
 
-    private var _binding: FragmentLab3Binding? = null
-    private lateinit var lab3ViewModel: Lab3ViewModel
+
+    private var _binding: FragmentLab4Binding? = null
+    private lateinit var lab4ViewModel: Lab4ViewModel
     private val mainViewModel: MainViewModel by activityViewModels()
 
     // This property is only valid between onCreateView and
@@ -37,31 +41,62 @@ class Lab3Fragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        lab3ViewModel = ViewModelProvider(this).get(Lab3ViewModel::class.java)
+        lab4ViewModel = ViewModelProvider(this).get(Lab4ViewModel::class.java)
 
-        _binding = FragmentLab3Binding.inflate(inflater, container, false)
+        _binding = FragmentLab4Binding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        lab3ViewModel.passphrase.observe(viewLifecycleOwner) {
-            if (binding.etPassphrase.text.toString() != it) {
-                binding.etPassphrase.setText(it)
-                binding.etPassphrase.setSelection(it.length) // Move cursor to the end
+        lab4ViewModel.privateKey.observe(viewLifecycleOwner) {
+            binding.tvPrivateKey.text = it
+        }
+
+        lab4ViewModel.publicKey.observe(viewLifecycleOwner) {
+            binding.tvPublicKey.text = it
+        }
+
+        binding.btnGenerateKeys.setOnClickListener {
+            lab4ViewModel.generateKeys().observe(viewLifecycleOwner) {
+                observeForProgressBar(it, "Keys generated!")
             }
         }
 
-        // Add a TextWatcher to listen for key taps and update ViewModel
-        binding.etPassphrase.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val newText = s.toString()
-                if (newText != lab3ViewModel.passphrase.value) {
-                    lab3ViewModel.updatePassphrase(newText) // Update ViewModel
-                }
+        binding.btnSavePublicKey.setOnClickListener {
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type =
+                    "application/octet-stream"  // You can change this MIME type based on your needs
+                putExtra(Intent.EXTRA_TITLE, "id_rsa.pub")  // Suggested filename
             }
+            savePublicKeyLauncher.launch(intent)
+        }
 
-            override fun afterTextChanged(s: Editable?) {}
-        })
+        binding.btnLoadPublicKey.setOnClickListener {
+            // Open the file picker when button is clicked
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"  // You can change this MIME type if you want to filter file types
+            }
+            loadPublicKeyLauncher.launch(intent)
+        }
+
+        binding.btnSavePrivateKey.setOnClickListener {
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type =
+                    "application/octet-stream"  // You can change this MIME type based on your needs
+                putExtra(Intent.EXTRA_TITLE, "id_rsa")  // Suggested filename
+            }
+            savePrivateKeyLauncher.launch(intent)
+        }
+
+        binding.btnLoadPrivateKey.setOnClickListener {
+            // Open the file picker when button is clicked
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"  // You can change this MIME type if you want to filter file types
+            }
+            loadPrivateKeyLauncher.launch(intent)
+        }
 
         binding.btnEncryptFile.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
@@ -79,11 +114,66 @@ class Lab3Fragment : Fragment() {
             }
             decryptFilePickerLauncher.launch(intent)
         }
+
+
         return root
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        loadPublicKeyLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri: Uri? = result.data?.data
+                    uri?.let {
+                        // Process the selected file's Uri for reading
+                        lab4ViewModel.loadPublicKey(it).observe(viewLifecycleOwner) { operation ->
+                            observeForProgressBar(operation, "Public Key Loaded!")
+                        }
+                    }
+                }
+            }
+
+        savePublicKeyLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri: Uri? = result.data?.data
+                    uri?.let {
+                        // Write data to the selected Uri
+                        lab4ViewModel.savePublicKey(it).observe(viewLifecycleOwner) { operation ->
+                            observeForProgressBar(operation, "Public Key Saved!")
+                        }
+                    }
+                }
+            }
+
+        // Launchers for loading and saving private keys
+        loadPrivateKeyLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri: Uri? = result.data?.data
+                    uri?.let {
+                        // Process the selected file's Uri for reading
+                        lab4ViewModel.loadPrivateKey(it).observe(viewLifecycleOwner) { operation ->
+                            observeForProgressBar(operation, "Private Key Loaded!")
+                        }
+                    }
+                }
+            }
+
+        savePrivateKeyLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri: Uri? = result.data?.data
+                    uri?.let {
+                        // Write data to the selected Uri
+                        lab4ViewModel.savePrivateKey(it).observe(viewLifecycleOwner) { operation ->
+                            observeForProgressBar(operation, "Private Key Saved!")
+                        }
+                    }
+                }
+            }
 
         var inputUri: Uri? = null
 
@@ -109,7 +199,7 @@ class Lab3Fragment : Fragment() {
                     val outputUri: Uri? = result.data?.data
                     outputUri?.let {
                         // Process the selected file's Uri for reading
-                        lab3ViewModel.encryptFile(inputUri!!, it)
+                        lab4ViewModel.encryptFile(inputUri!!, it)
                             .observe(viewLifecycleOwner) { result ->
                                 observeForProgressBar(result, "Encrypted!")
                             }
@@ -139,7 +229,7 @@ class Lab3Fragment : Fragment() {
                 if (result.resultCode == Activity.RESULT_OK) {
                     val uri: Uri? = result.data?.data
                     uri?.let {
-                        lab3ViewModel.decryptFile(inputUri!!, it)
+                        lab4ViewModel.decryptFile(inputUri!!, it)
                             .observe(viewLifecycleOwner) { result ->
                                 observeForProgressBar(result, "Decrypted!")
                             }

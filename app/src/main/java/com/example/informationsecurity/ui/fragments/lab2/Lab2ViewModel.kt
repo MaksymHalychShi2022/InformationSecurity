@@ -1,4 +1,4 @@
-package com.example.informationsecurity.ui.lab2
+package com.example.informationsecurity.ui.fragments.lab2
 
 import android.app.Application
 import android.content.ContentResolver

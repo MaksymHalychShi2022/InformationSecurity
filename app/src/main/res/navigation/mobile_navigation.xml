@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/nav_lab1"
-        android:name="com.example.informationsecurity.ui.lab1.GenerateRandomNumbersFragment"
+        android:name="com.example.informationsecurity.ui.fragments.lab1.GenerateRandomNumbersFragment"
         android:label="@string/menu_lab1"
         tools:layout="@layout/fragment_generate_random_numbers" >
         <action
@@ -17,23 +17,23 @@
 
     <fragment
         android:id="@+id/nav_lab2"
-        android:name="com.example.informationsecurity.ui.lab2.Lab2Fragment"
+        android:name="com.example.informationsecurity.ui.fragments.lab2.Lab2Fragment"
         android:label="@string/menu_lab2"
         tools:layout="@layout/fragment_lab2" />
 
     <fragment
         android:id="@+id/nav_lab3"
-        android:name="com.example.informationsecurity.ui.lab3.Lab3Fragment"
+        android:name="com.example.informationsecurity.ui.fragments.lab3.Lab3Fragment"
         android:label="@string/menu_lab3"
         tools:layout="@layout/fragment_lab3" />
     <fragment
         android:id="@+id/estimatePiFragment"
-        android:name="com.example.informationsecurity.ui.lab1.EstimatePiFragment"
+        android:name="com.example.informationsecurity.ui.fragments.lab1.EstimatePiFragment"
         android:label="@string/menu_lab1"
         tools:layout="@layout/fragment_estimate_pi" />
     <fragment
         android:id="@+id/nav_lab4"
-        android:name="com.example.informationsecurity.ui.lab4.Lab4Fragment"
+        android:name="com.example.informationsecurity.ui.fragments.lab4.Lab4Fragment"
         android:label="@string/menu_lab4"
         tools:layout="@layout/fragment_lab4" />
 </navigation>

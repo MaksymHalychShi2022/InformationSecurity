@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="10dp"
-    tools:context=".ui.lab4.Lab4Fragment">
+    tools:context=".ui.fragments.lab4.Lab4Fragment">
 
     <Button
         android:id="@+id/btnEncryptFile"
