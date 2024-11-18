@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.informationsecurity.utils.OperationState
 import kotlinx.coroutines.launch
 import java.security.KeyFactory
+import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
@@ -38,7 +39,18 @@ class Lab5ViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             operationState.postValue(OperationState.Loading())
             try {
-                ///
+                // Generate Key Pair using DSA
+                val keyPairGenerator = KeyPairGenerator.getInstance("DSA")
+                keyPairGenerator.initialize(2048) // 2048-bit key size for better security
+                val keyPair: KeyPair = keyPairGenerator.generateKeyPair()
+
+                // Convert keys to Base64 strings for readability
+                val publicKeyEncoded = Base64.getEncoder().encodeToString(keyPair.public.encoded)
+                val privateKeyEncoded = Base64.getEncoder().encodeToString(keyPair.private.encoded)
+
+                // Update LiveData for keys
+                _publicKey.postValue(publicKeyEncoded)
+                _privateKey.postValue(privateKeyEncoded)
 
                 operationState.postValue(OperationState.Success(Unit))
             } catch (e: Exception) {
@@ -48,6 +60,7 @@ class Lab5ViewModel(application: Application) : AndroidViewModel(application) {
 
         return operationState
     }
+
 
     fun loadPublicKey(uri: Uri): LiveData<OperationState<Unit>> {
         val operationState = MutableLiveData<OperationState<Unit>>()
