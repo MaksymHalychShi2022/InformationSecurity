@@ -20,5 +20,9 @@
             android:id="@+id/nav_lab4"
             android:icon="@drawable/ic_launcher_foreground"
             android:title="@string/menu_lab4" />
+        <item
+            android:id="@+id/nav_lab5"
+            android:icon="@drawable/ic_launcher_foreground"
+            android:title="@string/menu_lab5" />
     </group>
 </menu>

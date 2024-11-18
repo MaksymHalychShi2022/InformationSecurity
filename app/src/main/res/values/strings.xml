@@ -33,4 +33,8 @@
     <string name="generate_keys">Generate</string>
     <string name="save_public_key">Save Public Key</string>
     <string name="save_private_key">Save Private Key</string>
+    <string name="menu_lab5">Lab 5</string>
+    <string name="sign">Sign</string>
+    <string name="sign_file">Sign file</string>
+    <string name="check_file_signature">Check file signature</string>
 </resources>
