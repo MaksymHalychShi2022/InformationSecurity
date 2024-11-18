@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
@@ -164,15 +165,38 @@ class Lab5ViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             operationState.postValue(OperationState.Loading())
             try {
-                ///
+                // Ensure keys are available
+                val privateKeyEncoded = _privateKey.value
+                if (privateKeyEncoded.isNullOrEmpty()) {
+                    throw Exception("Private key not available")
+                }
+
+                // Decode the private key from Base64
+                val privateKeyBytes = Base64.getDecoder().decode(privateKeyEncoded)
+                val privateKey = java.security.KeyFactory.getInstance("DSA")
+                    .generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
+
+                // Initialize Signature with the private key
+                val signature = Signature.getInstance("SHA256withDSA")
+                signature.initSign(privateKey)
+                signature.update(inputString.toByteArray())
+
+                // Generate the digital signature
+                val digitalSignature = signature.sign()
+                val digitalSignatureEncoded = Base64.getEncoder().encodeToString(digitalSignature)
+
+                // Update the signature output
+                _signatureOutput.postValue(digitalSignatureEncoded)
+
                 operationState.postValue(OperationState.Success(Unit))
             } catch (e: Exception) {
-                operationState.postValue(OperationState.Error("Error: ${e.message}"))
+                operationState.postValue(OperationState.Error("Error signing input: ${e.message}"))
             }
         }
 
         return operationState
     }
+
 
     fun sign(uri: Uri): LiveData<OperationState<Unit>> {
         val operationState = MutableLiveData<OperationState<Unit>>()

@@ -106,7 +106,7 @@ class Lab5Fragment : Fragment() {
                 Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            lab5ViewModel.sign(inputString)
+            lab5ViewModel.sign(inputString).observe(viewLifecycleOwner, ::observeForProgressBar)
         }
 
         binding.btnSignFile.setOnClickListener {
