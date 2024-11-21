@@ -1,11 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- Buttons for Save and Load (Centered) -->
+    <!-- Label TextView -->
+    <TextView
+        android:id="@+id/tvLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Default Label"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Buttons for Save and Load -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -27,7 +38,7 @@
             android:text="Load" />
     </LinearLayout>
 
-    <!-- Scrollable TextView below the buttons -->
+    <!-- Scrollable TextView -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"

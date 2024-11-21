@@ -4,132 +4,52 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    tools:context=".ui.fragments.lab5.Lab5Fragment">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        tools:context=".ui.fragments.lab5.Lab5Fragment">
+        android:orientation="vertical"
+        android:padding="10dp">
 
-        <EditText
-            android:id="@+id/etInputString"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:autofillHints="Hello world"
-            android:hint="@string/input_string"
-            app:layout_constraintEnd_toStartOf="@+id/btnSign"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/btnSign" />
-
-        <Button
-            android:id="@+id/btnSign"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/sign"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ScrollView
-            android:id="@+id/scrollSignatureOutput"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="300dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/etInputString">
+            android:layout_height="wrap_content">
 
-            <TextView
-                android:id="@+id/tvSignatureOutput"
-                android:layout_width="match_parent"
+            <EditText
+                android:id="@+id/etInputString"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:textSize="18sp" />
+                android:layout_weight="1"
+                android:autofillHints="Hello world"
+                android:hint="@string/input_string"
+                app:layout_constraintEnd_toStartOf="@+id/btnSign"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/btnSign" />
 
-        </ScrollView>
-
-
-        <Button
-            android:id="@+id/btnSaveSignature"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/save_signature"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/scrollSignatureOutput" />
-
-        <Button
-            android:id="@+id/btnLoadSignature"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/load_signature"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnSaveSignature" />
-
-        <Button
-            android:id="@+id/btnSavePublicKey"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/save_public_key"
-            app:layout_constraintEnd_toStartOf="@+id/btnLoadPublicKey"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnLoadSignature" />
-
-        <Button
-            android:id="@+id/btnLoadPublicKey"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/load_public_key"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btnSavePublicKey"
-            app:layout_constraintTop_toTopOf="@+id/btnSavePublicKey" />
-
-        <ScrollView
-            android:id="@+id/scrollPublicKey"
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnSavePublicKey">
-
-            <TextView
-                android:id="@+id/tvPublicKey"
-                android:layout_width="match_parent"
+            <Button
+                android:id="@+id/btnSign"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:textSize="18sp" />
+                android:text="@string/sign"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        </ScrollView>
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/btnSavePrivateKey"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/save_private_key"
-            app:layout_constraintEnd_toStartOf="@+id/btnLoadPrivateKey"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/scrollPublicKey" />
+        <include
+            android:id="@+id/outputSignature"
+            layout="@layout/widget_output" />
 
-        <Button
-            android:id="@+id/btnLoadPrivateKey"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/load_private_key"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btnSavePrivateKey"
-            app:layout_constraintTop_toBottomOf="@+id/scrollPublicKey" />
+        <include
+            android:id="@+id/outputPublicKey"
+            layout="@layout/widget_output" />
 
-        <ScrollView
-            android:id="@+id/scrollPrivateKey"
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnSavePrivateKey">
+        <include
+            android:id="@+id/outputPrivateKey"
+            layout="@layout/widget_output" />
 
-            <TextView
-                android:id="@+id/tvPrivateKey"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:textSize="18sp" />
+    </LinearLayout>
 
-        </ScrollView>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

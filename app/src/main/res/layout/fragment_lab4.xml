@@ -1,79 +1,23 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dp"
+    android:fillViewport="true"
     tools:context=".ui.fragments.lab4.Lab4Fragment">
 
-    <Button
-        android:id="@+id/btnSavePublicKey"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="@string/save_public_key"
-        app:layout_constraintEnd_toStartOf="@+id/btnLoadPublicKey"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/btnLoadPublicKey"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/load_public_key"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btnSavePublicKey"
-        app:layout_constraintTop_toTopOf="@+id/btnSavePublicKey" />
-
-    <ScrollView
-        android:id="@+id/scrollPublicKey"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="300dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSavePublicKey">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="10dp">
 
-        <TextView
-            android:id="@+id/tvPublicKey"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:textSize="18sp" />
+        <include
+            android:id="@+id/outputPublicKey"
+            layout="@layout/widget_output" />
 
-    </ScrollView>
-
-    <Button
-        android:id="@+id/btnSavePrivateKey"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/save_private_key"
-        app:layout_constraintEnd_toStartOf="@+id/btnLoadPrivateKey"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scrollPublicKey" />
-
-    <Button
-        android:id="@+id/btnLoadPrivateKey"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/load_private_key"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btnSavePrivateKey"
-        app:layout_constraintTop_toBottomOf="@+id/scrollPublicKey" />
-
-    <ScrollView
-        android:id="@+id/scrollPrivateKey"
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSavePrivateKey">
-
-        <TextView
-            android:id="@+id/tvPrivateKey"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:textSize="18sp" />
-
-    </ScrollView>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <include
+            android:id="@+id/outputPrivateKey"
+            layout="@layout/widget_output" />
+    </LinearLayout>
+</ScrollView>

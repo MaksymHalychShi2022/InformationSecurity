@@ -79,6 +79,13 @@ class Lab1Fragment : Fragment() {
             }
         }
 
+        // Generated Numbers Output
+        binding.outputGeneratedNumbers.tvLabel.text =
+            requireContext().getString(R.string.generated_numbers)
+        viewModel.generatedNumbers.observe(viewLifecycleOwner) {
+            binding.outputGeneratedNumbers.tvScrollableText.text = it
+        }
+
         binding.outputGeneratedNumbers.btnSave.setOnClickListener {
             Toast.makeText(requireContext(), "Not implemented", Toast.LENGTH_SHORT).show()
         }
@@ -87,9 +94,6 @@ class Lab1Fragment : Fragment() {
             Toast.makeText(requireContext(), "Not implemented", Toast.LENGTH_SHORT).show()
         }
 
-        viewModel.generatedNumbers.observe(viewLifecycleOwner) {
-            binding.outputGeneratedNumbers.tvScrollableText.text = it
-        }
         return binding.root
     }
 

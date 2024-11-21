@@ -137,68 +137,13 @@ class Lab5Fragment : Fragment() {
 
         _binding = FragmentLab5Binding.inflate(inflater, container, false)
 
+        // Signature Output
+        binding.outputSignature.tvLabel.text = requireContext().getString(R.string.signature)
         lab5ViewModel.signatureOutput.observe(viewLifecycleOwner) {
-            binding.tvSignatureOutput.text = it
+            binding.outputSignature.tvScrollableText.text = it
         }
 
-        lab5ViewModel.privateKey.observe(viewLifecycleOwner) {
-            binding.tvPrivateKey.text = it
-        }
-
-        lab5ViewModel.publicKey.observe(viewLifecycleOwner) {
-            binding.tvPublicKey.text = it
-        }
-
-        binding.btnSavePublicKey.setOnClickListener {
-            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type =
-                    "application/octet-stream"  // You can change this MIME type based on your needs
-                putExtra(Intent.EXTRA_TITLE, "id_rsa.pub")  // Suggested filename
-            }
-            savePublicKeyLauncher.launch(intent)
-        }
-
-        binding.btnLoadPublicKey.setOnClickListener {
-            // Open the file picker when button is clicked
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
-            }
-            loadPublicKeyLauncher.launch(intent)
-        }
-
-        binding.btnSavePrivateKey.setOnClickListener {
-            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type =
-                    "application/octet-stream"  // You can change this MIME type based on your needs
-                putExtra(Intent.EXTRA_TITLE, "id_rsa")  // Suggested filename
-            }
-            savePrivateKeyLauncher.launch(intent)
-        }
-
-        binding.btnLoadPrivateKey.setOnClickListener {
-            // Open the file picker when button is clicked
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
-            }
-            loadPrivateKeyLauncher.launch(intent)
-        }
-
-        binding.btnSign.setOnClickListener {
-            val inputString = binding.etInputString.text.toString()
-            if (inputString.isEmpty()) {
-                Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            lab5ViewModel.sign(inputString).observe(viewLifecycleOwner) {
-                observeForProgressBar(it, "Signed!")
-            }
-        }
-
-        binding.btnSaveSignature.setOnClickListener {
+        binding.outputSignature.btnSave.setOnClickListener {
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type =
@@ -208,12 +153,74 @@ class Lab5Fragment : Fragment() {
             saveSignatureOutputLauncher.launch(intent)
         }
 
-        binding.btnLoadSignature.setOnClickListener {
+        binding.outputSignature.btnLoad.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "*/*"  // You can change this MIME type if you want to filter file types
             }
             loadSignatureOutputLauncher.launch(intent)
+        }
+
+        // Public Key Output
+        binding.outputPublicKey.tvLabel.text = requireContext().getString(R.string.public_key)
+        lab5ViewModel.publicKey.observe(viewLifecycleOwner) {
+            binding.outputPublicKey.tvScrollableText.text = it
+        }
+
+        binding.outputPublicKey.btnSave.setOnClickListener {
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type =
+                    "application/octet-stream"  // You can change this MIME type based on your needs
+                putExtra(Intent.EXTRA_TITLE, "id_rsa.pub")  // Suggested filename
+            }
+            savePublicKeyLauncher.launch(intent)
+        }
+
+        binding.outputPublicKey.btnLoad.setOnClickListener {
+            // Open the file picker when button is clicked
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"  // You can change this MIME type if you want to filter file types
+            }
+            loadPublicKeyLauncher.launch(intent)
+        }
+
+        // Private Key Output
+        binding.outputPrivateKey.tvLabel.text = requireContext().getString(R.string.private_key)
+        lab5ViewModel.privateKey.observe(viewLifecycleOwner) {
+            binding.outputPrivateKey.tvScrollableText.text = it
+        }
+
+        binding.outputPrivateKey.btnSave.setOnClickListener {
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type =
+                    "application/octet-stream"  // You can change this MIME type based on your needs
+                putExtra(Intent.EXTRA_TITLE, "id_rsa")  // Suggested filename
+            }
+            savePrivateKeyLauncher.launch(intent)
+        }
+
+        binding.outputPrivateKey.btnLoad.setOnClickListener {
+            // Open the file picker when button is clicked
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"  // You can change this MIME type if you want to filter file types
+            }
+            loadPrivateKeyLauncher.launch(intent)
+        }
+
+        // Sign
+        binding.btnSign.setOnClickListener {
+            val inputString = binding.etInputString.text.toString()
+            if (inputString.isEmpty()) {
+                Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            lab5ViewModel.sign(inputString).observe(viewLifecycleOwner) {
+                observeForProgressBar(it, "Signed!")
+            }
         }
 
         return binding.root

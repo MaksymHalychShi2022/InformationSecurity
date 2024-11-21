@@ -91,15 +91,13 @@ class Lab4Fragment : Fragment() {
 
         _binding = FragmentLab4Binding.inflate(inflater, container, false)
 
-        lab4ViewModel.privateKey.observe(viewLifecycleOwner) {
-            binding.tvPrivateKey.text = it
-        }
-
+        // Public Key Output
+        binding.outputPublicKey.tvLabel.text = requireContext().getString(R.string.public_key)
         lab4ViewModel.publicKey.observe(viewLifecycleOwner) {
-            binding.tvPublicKey.text = it
+            binding.outputPublicKey.tvScrollableText.text = it
         }
 
-        binding.btnSavePublicKey.setOnClickListener {
+        binding.outputPublicKey.btnSave.setOnClickListener {
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type =
@@ -109,7 +107,7 @@ class Lab4Fragment : Fragment() {
             savePublicKeyLauncher.launch(intent)
         }
 
-        binding.btnLoadPublicKey.setOnClickListener {
+        binding.outputPublicKey.btnLoad.setOnClickListener {
             // Open the file picker when button is clicked
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
@@ -118,7 +116,13 @@ class Lab4Fragment : Fragment() {
             loadPublicKeyLauncher.launch(intent)
         }
 
-        binding.btnSavePrivateKey.setOnClickListener {
+        // Private Key Output
+        binding.outputPrivateKey.tvLabel.text = requireContext().getString(R.string.private_key)
+        lab4ViewModel.privateKey.observe(viewLifecycleOwner) {
+            binding.outputPrivateKey.tvScrollableText.text = it
+        }
+
+        binding.outputPrivateKey.btnSave.setOnClickListener {
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type =
@@ -128,7 +132,7 @@ class Lab4Fragment : Fragment() {
             savePrivateKeyLauncher.launch(intent)
         }
 
-        binding.btnLoadPrivateKey.setOnClickListener {
+        binding.outputPrivateKey.btnLoad.setOnClickListener {
             // Open the file picker when button is clicked
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)

@@ -83,7 +83,13 @@ class Lab2Fragment : Fragment() {
             lab2ViewModel.hash(inputString).observe(viewLifecycleOwner, ::observeForProgressBar)
         }
 
-        binding.btnSaveOutputToFile.setOnClickListener {
+        // Hash Output
+        binding.outputHash.tvLabel.text = requireContext().getString(R.string.hash)
+        lab2ViewModel.output.observe(viewLifecycleOwner) {
+            binding.outputHash.tvScrollableText.text = it
+        }
+
+        binding.outputHash.btnSave.setOnClickListener {
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type =
@@ -93,9 +99,10 @@ class Lab2Fragment : Fragment() {
             fileSaveLauncher.launch(intent)
         }
 
-        lab2ViewModel.output.observe(viewLifecycleOwner) {
-            binding.tvOutput.text = it
+        binding.outputHash.btnLoad.setOnClickListener {
+
         }
+
         return binding.root
     }
 
@@ -124,8 +131,7 @@ class Lab2Fragment : Fragment() {
                         // Write data to the selected Uri
                         lab2ViewModel.output.value?.let { output ->
                             lab2ViewModel.writeToFileUri(it, output).observe(
-                                viewLifecycleOwner,
-                                ::observeForProgressBar
+                                viewLifecycleOwner, ::observeForProgressBar
                             )
                         }
                     }
@@ -140,8 +146,7 @@ class Lab2Fragment : Fragment() {
                     uri?.let {
                         // Write data to the selected Uri
                         lab2ViewModel.compareWithHashInFile(uri).observe(
-                            viewLifecycleOwner,
-                            ::observeForProgressBar
+                            viewLifecycleOwner, ::observeForProgressBar
                         )
                     }
                 }
