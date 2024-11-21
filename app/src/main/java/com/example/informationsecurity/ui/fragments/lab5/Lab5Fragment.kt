@@ -64,7 +64,7 @@ class Lab5Fragment : Fragment() {
 
         binding.outputSignature.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab5ViewModel.loadPublicKey(uri).observe(viewLifecycleOwner) { operation ->
+                lab5ViewModel.loadSignature(uri).observe(viewLifecycleOwner) { operation ->
                     observeForProgressBar(operation, "Signature Loaded!")
                 }
             }
@@ -103,7 +103,7 @@ class Lab5Fragment : Fragment() {
 
         binding.outputPrivateKey.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab5ViewModel.savePublicKey(uri).observe(viewLifecycleOwner) { operation ->
+                lab5ViewModel.savePrivateKey(uri).observe(viewLifecycleOwner) { operation ->
                     observeForProgressBar(operation, "Private Key Saved!")
                 }
             }
@@ -112,7 +112,7 @@ class Lab5Fragment : Fragment() {
 
         binding.outputPrivateKey.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab5ViewModel.loadPublicKey(uri).observe(viewLifecycleOwner) { operation ->
+                lab5ViewModel.loadPrivateKey(uri).observe(viewLifecycleOwner) { operation ->
                     observeForProgressBar(operation, "Private Key Loaded!")
                 }
             }
