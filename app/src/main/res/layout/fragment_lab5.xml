@@ -48,21 +48,45 @@
 
 
         <Button
+            android:id="@+id/btnVerify"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/verify"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/scrollSignatureOutput" />
+
+        <Button
             android:id="@+id/btnSignFile"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/sign_file"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/scrollSignatureOutput" />
+            app:layout_constraintTop_toBottomOf="@+id/btnVerify" />
 
 
         <Button
-            android:id="@+id/btnCheckFileSignature"
+            android:id="@+id/btnVerifyFile"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/check_file_signature"
+            android:text="@string/verify_file_signature"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/btnSignFile" />
+
+        <Button
+            android:id="@+id/btnSaveSignature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/save_signature"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnVerifyFile" />
+
+        <Button
+            android:id="@+id/btnLoadSignature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/load_signature"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnSaveSignature" />
 
         <Button
             android:id="@+id/btnGenerateKeys"
@@ -70,7 +94,7 @@
             android:layout_height="wrap_content"
             android:text="@string/generate_keys"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnCheckFileSignature" />
+            app:layout_constraintTop_toBottomOf="@+id/btnLoadSignature" />
 
         <Button
             android:id="@+id/btnSavePublicKey"

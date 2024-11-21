@@ -1,21 +1,24 @@
 package com.example.informationsecurity.ui.fragments.lab5
 
 import android.app.Application
+import android.content.ContentResolver
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.informationsecurity.utils.OperationState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.Signature
+import java.security.spec.InvalidKeySpecException
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
-import javax.crypto.Cipher
 
 class Lab5ViewModel(application: Application) : AndroidViewModel(application) {
     private val _signatureOutput = MutableLiveData<String>().apply {
@@ -168,27 +171,33 @@ class Lab5ViewModel(application: Application) : AndroidViewModel(application) {
                 // Ensure keys are available
                 val privateKeyEncoded = _privateKey.value
                 if (privateKeyEncoded.isNullOrEmpty()) {
-                    throw Exception("Private key not available")
+                    throw IllegalArgumentException("Private key not available")
                 }
 
                 // Decode the private key from Base64
                 val privateKeyBytes = Base64.getDecoder().decode(privateKeyEncoded)
-                val privateKey = java.security.KeyFactory.getInstance("DSA")
-                    .generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
+                val privateKey = KeyFactory.getInstance("DSA")
+                    .generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
 
                 // Initialize Signature with the private key
                 val signature = Signature.getInstance("SHA256withDSA")
                 signature.initSign(privateKey)
-                signature.update(inputString.toByteArray())
+
+                // Update Signature with input string bytes
+                signature.update(inputString.toByteArray(Charsets.UTF_8))
 
                 // Generate the digital signature
                 val digitalSignature = signature.sign()
                 val digitalSignatureEncoded = Base64.getEncoder().encodeToString(digitalSignature)
 
-                // Update the signature output
+                // Post the signature output
                 _signatureOutput.postValue(digitalSignatureEncoded)
 
                 operationState.postValue(OperationState.Success(Unit))
+            } catch (e: IllegalArgumentException) {
+                operationState.postValue(OperationState.Error("Invalid input: ${e.message}"))
+            } catch (e: InvalidKeySpecException) {
+                operationState.postValue(OperationState.Error("Invalid private key format: ${e.message}"))
             } catch (e: Exception) {
                 operationState.postValue(OperationState.Error("Error signing input: ${e.message}"))
             }
@@ -204,30 +213,176 @@ class Lab5ViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             operationState.postValue(OperationState.Loading())
             try {
-                ///
+                // Ensure keys are available
+                val privateKeyEncoded = _privateKey.value
+                if (privateKeyEncoded.isNullOrEmpty()) {
+                    throw Exception("Private key not available")
+                }
+
+                // Decode the private key from Base64
+                val privateKeyBytes = Base64.getDecoder().decode(privateKeyEncoded)
+                val privateKey = java.security.KeyFactory.getInstance("DSA")
+                    .generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
+
+                // Read file content from the URI
+                val contentResolver: ContentResolver = getApplication<Application>().contentResolver
+                val fileContent = withContext(Dispatchers.IO) {
+                    contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                        ?: throw Exception("Unable to read file content")
+                }
+
+                // Initialize Signature with the private key
+                val signature = Signature.getInstance("SHA256withDSA")
+                signature.initSign(privateKey)
+                signature.update(fileContent)
+
+                // Generate the digital signature
+                val digitalSignature = signature.sign()
+                val digitalSignatureEncoded = Base64.getEncoder().encodeToString(digitalSignature)
+
+                // Update the signature output
+                _signatureOutput.postValue(digitalSignatureEncoded)
+
                 operationState.postValue(OperationState.Success(Unit))
             } catch (e: Exception) {
-                operationState.postValue(OperationState.Error("Error: ${e.message}"))
+                operationState.postValue(OperationState.Error("Error signing file: ${e.message}"))
             }
         }
 
         return operationState
     }
 
-    fun checkSignature(uri: Uri): LiveData<OperationState<Unit>> {
+    fun saveSignatureOutput(uri: Uri): LiveData<OperationState<Unit>> {
         val operationState = MutableLiveData<OperationState<Unit>>()
 
         viewModelScope.launch {
             operationState.postValue(OperationState.Loading())
             try {
-                ///
-                operationState.postValue(OperationState.Success(Unit))
+                val signatureContent =
+                    _signatureOutput.value ?: throw Exception("Signature output is not available")
+                val contentResolver = getApplication<Application>().contentResolver
+                val outputStream = contentResolver.openOutputStream(uri)
+
+                outputStream?.use {
+                    it.bufferedWriter().use { writer -> writer.write(signatureContent) }
+                    operationState.postValue(OperationState.Success(Unit))
+                } ?: throw Exception("Unable to open OutputStream")
+
             } catch (e: Exception) {
-                operationState.postValue(OperationState.Error("Error: ${e.message}"))
+                operationState.postValue(OperationState.Error("Error saving signature output: ${e.message}"))
             }
         }
 
         return operationState
     }
+
+    fun verifySignature(inputData: String): LiveData<OperationState<Boolean>> {
+        val operationState = MutableLiveData<OperationState<Boolean>>()
+
+        viewModelScope.launch {
+            operationState.postValue(OperationState.Loading())
+            try {
+                // Ensure the public key and signature are available
+                val publicKeyEncoded = _publicKey.value
+                val storedSignature = _signatureOutput.value
+
+                if (publicKeyEncoded.isNullOrEmpty() || storedSignature.isNullOrEmpty()) {
+                    throw Exception("Public key or signature not available")
+                }
+
+                // Decode the public key from Base64
+                val publicKeyBytes = Base64.getDecoder().decode(publicKeyEncoded)
+                val publicKey = KeyFactory.getInstance("DSA")
+                    .generatePublic(X509EncodedKeySpec(publicKeyBytes))
+
+                // Decode the signature from Base64
+                val digitalSignature = Base64.getDecoder().decode(storedSignature)
+
+                // Initialize Signature with the public key for verification
+                val signature = Signature.getInstance("SHA256withDSA")
+                signature.initVerify(publicKey)
+                signature.update(inputData.toByteArray(Charsets.UTF_8))
+
+                // Verify the signature
+                val isVerified = signature.verify(digitalSignature)
+
+                operationState.postValue(OperationState.Success(isVerified))
+            } catch (e: Exception) {
+                operationState.postValue(OperationState.Error("Error verifying signature: ${e.message}"))
+            }
+        }
+
+        return operationState
+    }
+
+
+    fun verifyFileSignature(uri: Uri): LiveData<OperationState<Boolean>> {
+        val operationState = MutableLiveData<OperationState<Boolean>>()
+
+        viewModelScope.launch {
+            operationState.postValue(OperationState.Loading())
+            try {
+                // Ensure the public key and signature are available
+                val publicKeyEncoded = _publicKey.value
+                val storedSignature = _signatureOutput.value
+
+                if (publicKeyEncoded.isNullOrEmpty() || storedSignature.isNullOrEmpty()) {
+                    throw Exception("Public key or signature not available")
+                }
+
+                // Decode the public key from Base64
+                val publicKeyBytes = Base64.getDecoder().decode(publicKeyEncoded)
+                val publicKey = KeyFactory.getInstance("DSA")
+                    .generatePublic(X509EncodedKeySpec(publicKeyBytes))
+
+                // Decode the signature from Base64
+                val digitalSignature = Base64.getDecoder().decode(storedSignature)
+
+                // Read the file content from the URI
+                val contentResolver = getApplication<Application>().contentResolver
+                val fileContent = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: throw Exception("Unable to read file content")
+
+                // Initialize Signature with the public key for verification
+                val signature = Signature.getInstance("SHA256withDSA")
+                signature.initVerify(publicKey)
+                signature.update(fileContent)
+
+                // Verify the signature
+                val isVerified = signature.verify(digitalSignature)
+
+                operationState.postValue(OperationState.Success(isVerified))
+            } catch (e: Exception) {
+                operationState.postValue(OperationState.Error("Error verifying signature: ${e.message}"))
+            }
+        }
+
+        return operationState
+    }
+
+    fun loadSignature(uri: Uri): LiveData<OperationState<Unit>> {
+        val operationState = MutableLiveData<OperationState<Unit>>()
+
+        viewModelScope.launch {
+            operationState.postValue(OperationState.Loading())
+            try {
+                // Open an InputStream to read the content from the Uri
+                val contentResolver = getApplication<Application>().contentResolver
+                val inputStream = contentResolver.openInputStream(uri)
+
+                inputStream?.use {
+                    val content = it.bufferedReader().use { reader -> reader.readText() }
+                    _signatureOutput.postValue(content) // Save the read content to signatureOutput LiveData
+                    operationState.postValue(OperationState.Success(Unit))
+                } ?: throw Exception("Unable to open InputStream")
+
+            } catch (e: Exception) {
+                operationState.postValue(OperationState.Error("Error loading signature: ${e.message}"))
+            }
+        }
+
+        return operationState
+    }
+
 
 }

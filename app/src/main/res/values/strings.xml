@@ -37,4 +37,8 @@
     <string name="sign">Sign</string>
     <string name="sign_file">Sign file</string>
     <string name="check_file_signature">Check file signature</string>
+    <string name="save_signature">Save signature</string>
+    <string name="load_signature">Load signature</string>
+    <string name="verify_file_signature">Verify file</string>
+    <string name="verify">Verify</string>
 </resources>

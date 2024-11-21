@@ -25,7 +25,9 @@ class Lab5Fragment : Fragment() {
     private lateinit var savePrivateKeyLauncher: ActivityResultLauncher<Intent>
 
     private lateinit var signFilePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var checkFileSignaturePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var verifyFilePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var saveSignatureOutputLauncher: ActivityResultLauncher<Intent>
+    private lateinit var loadSignatureOutputLauncher: ActivityResultLauncher<Intent>
 
 
     private var _binding: FragmentLab5Binding? = null
@@ -106,7 +108,9 @@ class Lab5Fragment : Fragment() {
                 Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            lab5ViewModel.sign(inputString).observe(viewLifecycleOwner, ::observeForProgressBar)
+            lab5ViewModel.sign(inputString).observe(viewLifecycleOwner) {
+                observeForProgressBar(it, "Signed!")
+            }
         }
 
         binding.btnSignFile.setOnClickListener {
@@ -117,15 +121,67 @@ class Lab5Fragment : Fragment() {
             signFilePickerLauncher.launch(intent)
         }
 
+        binding.btnVerify.setOnClickListener {
+            val inputString = binding.etInputString.text.toString()
+            if (inputString.isEmpty()) {
+                Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            lab5ViewModel.verifySignature(inputString).observe(viewLifecycleOwner) { result ->
+                when (result) {
+                    is OperationState.Loading -> {
+                        mainViewModel.showProgressBar()
+                    }
 
-        binding.btnCheckFileSignature.setOnClickListener {
+                    is OperationState.Success -> {
+                        mainViewModel.hideProgressBar()
+                        result.data?.let { verified ->
+                            if (verified) {
+                                Toast.makeText(
+                                    requireContext(), "Verified", Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    requireContext(), "Verification failed", Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+
+                    }
+
+                    is OperationState.Error -> {
+                        mainViewModel.hideProgressBar()
+                        Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        binding.btnVerifyFile.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "*/*"  // You can change this MIME type if you want to filter file types
             }
-            checkFileSignaturePickerLauncher.launch(intent)
+            verifyFilePickerLauncher.launch(intent)
         }
 
+        binding.btnSaveSignature.setOnClickListener {
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type =
+                    "application/octet-stream"  // You can change this MIME type based on your needs
+                putExtra(Intent.EXTRA_TITLE, "signature.pem")  // Suggested filename
+            }
+            saveSignatureOutputLauncher.launch(intent)
+        }
+
+        binding.btnLoadSignature.setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"  // You can change this MIME type if you want to filter file types
+            }
+            loadSignatureOutputLauncher.launch(intent)
+        }
 
         return root
     }
@@ -192,17 +248,78 @@ class Lab5Fragment : Fragment() {
                     val uri = result.data?.data
 
                     uri?.let {
-                        lab5ViewModel.sign(it)
+                        lab5ViewModel.sign(it).observe(viewLifecycleOwner) { operation ->
+                            observeForProgressBar(operation, "Signed!")
+                        }
                     }
                 }
             }
 
-        checkFileSignaturePickerLauncher =
+        verifyFilePickerLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
                     val uri = result.data?.data
                     uri?.let {
-                        lab5ViewModel.checkSignature(it)
+                        lab5ViewModel.verifyFileSignature(it)
+                            .observe(viewLifecycleOwner) { result ->
+                                when (result) {
+                                    is OperationState.Loading -> {
+                                        mainViewModel.showProgressBar()
+                                    }
+
+                                    is OperationState.Success -> {
+                                        mainViewModel.hideProgressBar()
+                                        result.data?.let { verified ->
+                                            if (verified) {
+                                                Toast.makeText(
+                                                    requireContext(), "Verified", Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                Toast.makeText(
+                                                    requireContext(),
+                                                    "Verification failed",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+
+                                    }
+
+                                    is OperationState.Error -> {
+                                        mainViewModel.hideProgressBar()
+                                        Toast.makeText(
+                                            requireContext(), result.message, Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
+                    }
+                }
+            }
+
+        saveSignatureOutputLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri: Uri? = result.data?.data
+                    uri?.let {
+                        // Write data to the selected Uri
+                        lab5ViewModel.saveSignatureOutput(it)
+                            .observe(viewLifecycleOwner) { operation ->
+                                observeForProgressBar(operation, "Signature Saved!")
+                            }
+                    }
+                }
+            }
+
+        loadSignatureOutputLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri: Uri? = result.data?.data
+                    uri?.let {
+                        // Process the selected file's Uri for reading
+                        lab5ViewModel.loadSignature(it).observe(viewLifecycleOwner) { operation ->
+                            observeForProgressBar(operation, "Signature Loaded!")
+                        }
                     }
                 }
             }
