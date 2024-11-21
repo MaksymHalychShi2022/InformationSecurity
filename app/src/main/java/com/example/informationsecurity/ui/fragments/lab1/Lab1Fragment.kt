@@ -79,12 +79,16 @@ class Lab1Fragment : Fragment() {
             }
         }
 
-        binding.btnSaveToFile.setOnClickListener {
-            openSaveFileDialog()
+        binding.outputGeneratedNumbers.btnSave.setOnClickListener {
+            Toast.makeText(requireContext(), "Not implemented", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.outputGeneratedNumbers.btnLoad.setOnClickListener {
+            Toast.makeText(requireContext(), "Not implemented", Toast.LENGTH_SHORT).show()
         }
 
         viewModel.generatedNumbers.observe(viewLifecycleOwner) {
-            binding.tvOutput.text = it
+            binding.outputGeneratedNumbers.tvScrollableText.text = it
         }
         return binding.root
     }
