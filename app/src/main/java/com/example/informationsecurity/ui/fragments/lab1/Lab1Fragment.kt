@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -15,17 +14,20 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab1Binding
-import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
+import com.example.informationsecurity.ui.MainViewModel
+import com.example.informationsecurity.utils.OperationState
 
 class Lab1Fragment : Fragment() {
 
     private var _binding: FragmentLab1Binding? = null
-    private lateinit var viewModel: Lab1ViewModel
+    private val viewModel: Lab1ViewModel by viewModels()
+    private val mainViewModel: MainViewModel by activityViewModels()
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -44,6 +46,8 @@ class Lab1Fragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
+        _binding = FragmentLab1Binding.inflate(inflater, container, false)
+
         requireActivity().addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.lab1_option_menu, menu)
@@ -61,23 +65,17 @@ class Lab1Fragment : Fragment() {
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        viewModel = ViewModelProvider(this).get(Lab1ViewModel::class.java)
-
-        _binding = FragmentLab1Binding.inflate(inflater, container, false)
-        val root: View = binding.root
-
         binding.btnGenerate.setOnClickListener {
             val lengthOfSequence: Long? =
                 binding.etHowManyNumbersToGenerate.text.toString().toLongOrNull()
-            if (lengthOfSequence != null && lengthOfSequence > 0) {
-                val generator = LehmerRandomNumberGenerator()
-                val generatedNumbers = generator.generateSequence(lengthOfSequence)
-                viewModel.updateGeneratedNumbers(generatedNumbers.joinToString("\n"))
-
-                Toast.makeText(context, "Generated!", Toast.LENGTH_LONG).show()
-                Log.d("Period", "Period of generated sequence: ${generator.getPeriod()}")
-            } else {
-                Toast.makeText(context, "Invalid input!", Toast.LENGTH_LONG).show()
+            lengthOfSequence?.let { length ->
+                if (length <= 0) {
+                    Toast.makeText(context, "Invalid input!", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+                viewModel.generateRandomNumbers(length).observe(viewLifecycleOwner) {
+                    observeForProgressBar(it, "Generated")
+                }
             }
         }
 
@@ -88,7 +86,7 @@ class Lab1Fragment : Fragment() {
         viewModel.generatedNumbers.observe(viewLifecycleOwner) {
             binding.tvOutput.text = it
         }
-        return root
+        return binding.root
     }
 
 
@@ -114,6 +112,26 @@ class Lab1Fragment : Fragment() {
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(requireContext(), "Failed to save file!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun observeForProgressBar(result: OperationState<*>, successMassage: String? = null) {
+        when (result) {
+            is OperationState.Loading -> {
+                mainViewModel.showProgressBar()
+            }
+
+            is OperationState.Success -> {
+                successMassage?.let {
+                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                }
+                mainViewModel.hideProgressBar()
+            }
+
+            is OperationState.Error -> {
+                Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
+                mainViewModel.hideProgressBar()
+            }
         }
     }
 
