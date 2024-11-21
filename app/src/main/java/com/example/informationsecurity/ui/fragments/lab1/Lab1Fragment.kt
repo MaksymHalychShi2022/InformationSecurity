@@ -14,12 +14,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.informationsecurity.R
-import com.example.informationsecurity.databinding.FragmentGenerateRandomNumbersBinding
+import com.example.informationsecurity.databinding.FragmentLab1Binding
 import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
 
-class GenerateRandomNumbersFragment : Fragment() {
+class Lab1Fragment : Fragment() {
 
-    private var _binding: FragmentGenerateRandomNumbersBinding? = null
+    private var _binding: FragmentLab1Binding? = null
     private lateinit var viewModel: Lab1ViewModel
 
     // This property is only valid between onCreateView and
@@ -41,7 +41,7 @@ class GenerateRandomNumbersFragment : Fragment() {
     ): View {
         viewModel = ViewModelProvider(this).get(Lab1ViewModel::class.java)
 
-        _binding = FragmentGenerateRandomNumbersBinding.inflate(inflater, container, false)
+        _binding = FragmentLab1Binding.inflate(inflater, container, false)
         val root: View = binding.root
 
         binding.btnGenerate.setOnClickListener {

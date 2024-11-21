@@ -7,9 +7,9 @@
 
     <fragment
         android:id="@+id/nav_lab1"
-        android:name="com.example.informationsecurity.ui.fragments.lab1.GenerateRandomNumbersFragment"
+        android:name="com.example.informationsecurity.ui.fragments.lab1.Lab1Fragment"
         android:label="@string/menu_lab1"
-        tools:layout="@layout/fragment_generate_random_numbers" >
+        tools:layout="@layout/fragment_lab1" >
         <action
             android:id="@+id/action_nav_lab1_to_estimatePiFragment"
             app:destination="@id/estimatePiFragment" />
