@@ -5,14 +5,21 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import com.example.informationsecurity.R
 import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.databinding.FragmentLab4Binding
 import com.example.informationsecurity.utils.OperationState
@@ -43,8 +50,46 @@ class Lab4Fragment : Fragment() {
     ): View {
         lab4ViewModel = ViewModelProvider(this).get(Lab4ViewModel::class.java)
 
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.lab4_option_menu, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.generate_keys -> {
+                        lab4ViewModel.generateKeys().observe(viewLifecycleOwner) {
+                            observeForProgressBar(it, "Keys generated!")
+                        }
+                        true
+                    }
+
+                    R.id.encrypt_file -> {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type =
+                                "*/*"  // You can change this MIME type if you want to filter file types
+                        }
+                        encryptFilePickerLauncher.launch(intent)
+                        true
+                    }
+
+                    R.id.decrypt_file -> {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type =
+                                "*/*"  // You can change this MIME type if you want to filter file types
+                        }
+                        decryptFilePickerLauncher.launch(intent)
+                        true
+                    }
+
+                    else -> false
+                }
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
         _binding = FragmentLab4Binding.inflate(inflater, container, false)
-        val root: View = binding.root
 
         lab4ViewModel.privateKey.observe(viewLifecycleOwner) {
             binding.tvPrivateKey.text = it
@@ -52,12 +97,6 @@ class Lab4Fragment : Fragment() {
 
         lab4ViewModel.publicKey.observe(viewLifecycleOwner) {
             binding.tvPublicKey.text = it
-        }
-
-        binding.btnGenerateKeys.setOnClickListener {
-            lab4ViewModel.generateKeys().observe(viewLifecycleOwner) {
-                observeForProgressBar(it, "Keys generated!")
-            }
         }
 
         binding.btnSavePublicKey.setOnClickListener {
@@ -98,25 +137,7 @@ class Lab4Fragment : Fragment() {
             loadPrivateKeyLauncher.launch(intent)
         }
 
-        binding.btnEncryptFile.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
-            }
-            encryptFilePickerLauncher.launch(intent)
-        }
-
-
-        binding.btnDecryptFile.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
-            }
-            decryptFilePickerLauncher.launch(intent)
-        }
-
-
-        return root
+        return binding.root
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

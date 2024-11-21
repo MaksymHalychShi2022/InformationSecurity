@@ -8,34 +8,6 @@
     tools:context=".ui.fragments.lab4.Lab4Fragment">
 
     <Button
-        android:id="@+id/btnEncryptFile"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/encrypt_file"
-        app:layout_constraintEnd_toStartOf="@+id/btnGenerateKeys"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/btnGenerateKeys"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/generate_keys"
-        app:layout_constraintEnd_toStartOf="@+id/btnDecryptFile"
-        app:layout_constraintStart_toEndOf="@+id/btnEncryptFile"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
-    <Button
-        android:id="@+id/btnDecryptFile"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/decrypt_file"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btnGenerateKeys"
-        app:layout_constraintTop_toTopOf="@+id/btnEncryptFile" />
-
-    <Button
         android:id="@+id/btnSavePublicKey"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -43,7 +15,7 @@
         android:text="@string/save_public_key"
         app:layout_constraintEnd_toStartOf="@+id/btnLoadPublicKey"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnEncryptFile" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/btnLoadPublicKey"

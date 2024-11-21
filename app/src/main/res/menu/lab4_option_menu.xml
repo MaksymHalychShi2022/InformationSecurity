@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/generate_keys"
+        android:title="@string/generate_keys"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/encrypt_file"
+        android:title="@string/encrypt_file"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/decrypt_file"
+        android:title="@string/decrypt_file"
+        app:showAsAction="never" />
+</menu>
