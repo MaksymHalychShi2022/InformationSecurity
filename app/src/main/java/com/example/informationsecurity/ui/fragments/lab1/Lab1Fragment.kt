@@ -6,11 +6,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.informationsecurity.R
@@ -39,6 +44,23 @@ class Lab1Fragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.lab1_option_menu, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.estimate_pi -> {
+                        findNavController().navigate(R.id.action_nav_lab1_to_estimatePiFragment)
+                        true
+                    }
+
+                    else -> false
+                }
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
         viewModel = ViewModelProvider(this).get(Lab1ViewModel::class.java)
 
         _binding = FragmentLab1Binding.inflate(inflater, container, false)
@@ -63,15 +85,12 @@ class Lab1Fragment : Fragment() {
             openSaveFileDialog()
         }
 
-        binding.btnEstimatePi.setOnClickListener {
-            findNavController().navigate(R.id.action_nav_lab1_to_estimatePiFragment)
-        }
-
         viewModel.generatedNumbers.observe(viewLifecycleOwner) {
             binding.tvOutput.text = it
         }
         return root
     }
+
 
     // Open the file picker dialog to save the file
     private fun openSaveFileDialog() {
