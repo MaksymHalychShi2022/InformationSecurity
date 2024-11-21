@@ -1,8 +1,5 @@
 package com.example.informationsecurity.ui.fragments.lab3
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -10,37 +7,42 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
-import com.example.informationsecurity.ui.MainViewModel
+import androidx.fragment.app.viewModels
 import com.example.informationsecurity.databinding.FragmentLab3Binding
+import com.example.informationsecurity.ui.MainViewModel
+import com.example.informationsecurity.utils.FilePickerHandler
 import com.example.informationsecurity.utils.OperationState
 
 class Lab3Fragment : Fragment() {
 
-    private lateinit var encryptFilePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var encryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var decryptFilePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var decryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
-
-    private var _binding: FragmentLab3Binding? = null
-    private lateinit var lab3ViewModel: Lab3ViewModel
+    private val lab3ViewModel: Lab3ViewModel by viewModels()
     private val mainViewModel: MainViewModel by activityViewModels()
+    private var _binding: FragmentLab3Binding? = null
+
+    private lateinit var filePickerHandler: FilePickerHandler
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        filePickerHandler = FilePickerHandler(
+            launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                filePickerHandler.handleResult(result.resultCode, result.data)
+            }
+        )
+    }
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        lab3ViewModel = ViewModelProvider(this).get(Lab3ViewModel::class.java)
-
         _binding = FragmentLab3Binding.inflate(inflater, container, false)
-        val root: View = binding.root
 
         lab3ViewModel.passphrase.observe(viewLifecycleOwner) {
             if (binding.etPassphrase.text.toString() != it) {
@@ -64,89 +66,32 @@ class Lab3Fragment : Fragment() {
         })
 
         binding.btnEncryptFile.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
+            filePickerHandler.onFilePicked = { inputUri ->
+                filePickerHandler.onFilePicked = { outputUri ->
+                    lab3ViewModel.encryptFile(inputUri, outputUri)
+                        .observe(viewLifecycleOwner) { result ->
+                            observeForProgressBar(result, "Encrypted!")
+                        }
+                }
+                filePickerHandler.pickFileToWrite("application/octet-stream", "encrypted.txt")
             }
-            encryptFilePickerLauncher.launch(intent)
+            filePickerHandler.pickFileToRead("*/*")
         }
-
 
         binding.btnDecryptFile.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
+            filePickerHandler.onFilePicked = { inputUri ->
+                filePickerHandler.onFilePicked = { outputUri ->
+                    lab3ViewModel.decryptFile(inputUri, outputUri)
+                        .observe(viewLifecycleOwner) { result ->
+                            observeForProgressBar(result, "Decrypted!")
+                        }
+                }
+                filePickerHandler.pickFileToWrite("application/octet-stream", "decrypted.txt")
             }
-            decryptFilePickerLauncher.launch(intent)
+            filePickerHandler.pickFileToRead("*/*")
         }
-        return root
-    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        var inputUri: Uri? = null
-
-        encryptFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    inputUri = result.data?.data
-
-                    inputUri?.let {
-                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            type = "application/octet-stream" // MIME type for binary files
-                            putExtra(Intent.EXTRA_TITLE, "encrypted.txt") // Default file name
-                        }
-                        encryptOutputFilePickerLauncher.launch(intent)
-                    }
-                }
-            }
-
-        encryptOutputFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val outputUri: Uri? = result.data?.data
-                    outputUri?.let {
-                        // Process the selected file's Uri for reading
-                        lab3ViewModel.encryptFile(inputUri!!, it)
-                            .observe(viewLifecycleOwner) { result ->
-                                observeForProgressBar(result, "Encrypted!")
-                            }
-                    }
-                }
-                inputUri = null // so it could not be used in later calls
-            }
-
-
-        decryptFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    inputUri = result.data?.data
-                    inputUri?.let {
-                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            type = "application/octet-stream" // MIME type for binary files
-                            putExtra(Intent.EXTRA_TITLE, "decrypted.txt") // Default file name
-                        }
-                        decryptOutputFilePickerLauncher.launch(intent)
-                    }
-                }
-            }
-
-        decryptOutputFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        lab3ViewModel.decryptFile(inputUri!!, it)
-                            .observe(viewLifecycleOwner) { result ->
-                                observeForProgressBar(result, "Decrypted!")
-                            }
-                    }
-                }
-                inputUri = null
-            }
+        return binding.root
     }
 
 

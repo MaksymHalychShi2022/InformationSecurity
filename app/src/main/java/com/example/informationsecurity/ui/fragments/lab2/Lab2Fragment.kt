@@ -1,8 +1,5 @@
 package com.example.informationsecurity.ui.fragments.lab2
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -11,66 +8,43 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
 import com.example.informationsecurity.R
-import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.databinding.FragmentLab2Binding
+import com.example.informationsecurity.ui.MainViewModel
+import com.example.informationsecurity.utils.FilePickerHandler
 import com.example.informationsecurity.utils.OperationState
 
 class Lab2Fragment : Fragment() {
 
-    private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var fileSaveLauncher: ActivityResultLauncher<Intent>
-    private lateinit var compareWithHashInFileLauncher: ActivityResultLauncher<Intent>
-    private lateinit var lab2ViewModel: Lab2ViewModel
+    private val lab2ViewModel: Lab2ViewModel by viewModels()
     private val mainViewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentLab2Binding? = null
+
+    private lateinit var filePickerHandler: FilePickerHandler
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        filePickerHandler = FilePickerHandler(
+            launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                filePickerHandler.handleResult(result.resultCode, result.data)
+            }
+        )
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        lab2ViewModel = ViewModelProvider(this).get(Lab2ViewModel::class.java)
-
-        requireActivity().addMenuProvider(object : MenuProvider {
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.lab2_option_menu, menu)
-            }
-
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                return when (menuItem.itemId) {
-                    R.id.hash_file -> {
-                        // Open the file picker when button is clicked
-                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            type =
-                                "*/*"  // You can change this MIME type if you want to filter file types
-                        }
-                        filePickerLauncher.launch(intent)
-                        true
-                    }
-
-                    R.id.verify_file_hash -> {
-                        Toast.makeText(requireContext(), "Not implemented", Toast.LENGTH_SHORT)
-                            .show()
-                        true
-                    }
-
-                    else -> false
-                }
-            }
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
         _binding = FragmentLab2Binding.inflate(inflater, container, false)
 
         binding.btnHash.setOnClickListener {
@@ -90,68 +64,24 @@ class Lab2Fragment : Fragment() {
         }
 
         binding.outputHash.btnSave.setOnClickListener {
-            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type =
-                    "application/octet-stream"  // You can change this MIME type based on your needs
-                putExtra(Intent.EXTRA_TITLE, "hash.md5")  // Suggested filename
+            filePickerHandler.onFilePicked = { uri ->
+                lab2ViewModel.output.value?.let { output ->
+                    lab2ViewModel.writeToFileUri(uri, output)
+                        .observe(viewLifecycleOwner, ::observeForProgressBar)
+                }
             }
-            fileSaveLauncher.launch(intent)
+            filePickerHandler.pickFileToWrite("application/octet-stream", "hash.md5")
         }
 
         binding.outputHash.btnLoad.setOnClickListener {
 
         }
 
+        setupOptionMenu()
+
         return binding.root
     }
 
-    // Register the ActivityResultLauncher to open the file picker
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // Launcher for opening a document (reading file)
-        filePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Process the selected file's Uri for reading
-                        lab2ViewModel.hash(uri).observe(viewLifecycleOwner, ::observeForProgressBar)
-                    }
-                }
-            }
-
-        // Launcher for creating a document (writing file)
-        fileSaveLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Write data to the selected Uri
-                        lab2ViewModel.output.value?.let { output ->
-                            lab2ViewModel.writeToFileUri(it, output).observe(
-                                viewLifecycleOwner, ::observeForProgressBar
-                            )
-                        }
-                    }
-                }
-            }
-
-        // Launcher for comparing hash in file with those in buffer (reading file)
-        compareWithHashInFileLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Write data to the selected Uri
-                        lab2ViewModel.compareWithHashInFile(uri).observe(
-                            viewLifecycleOwner, ::observeForProgressBar
-                        )
-                    }
-                }
-            }
-    }
 
     private fun observeForProgressBar(result: OperationState<*>) {
         when (result) {
@@ -169,6 +99,34 @@ class Lab2Fragment : Fragment() {
             }
         }
     }
+
+    private fun setupOptionMenu() = requireActivity().addMenuProvider(object : MenuProvider {
+        override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+            menuInflater.inflate(R.menu.lab2_option_menu, menu)
+        }
+
+        override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+            return when (menuItem.itemId) {
+                R.id.hash_file -> {
+                    // Open the file picker when button is clicked
+                    filePickerHandler.onFilePicked = { uri ->
+                        lab2ViewModel.hash(uri)
+                            .observe(viewLifecycleOwner, ::observeForProgressBar)
+                    }
+                    filePickerHandler.pickFileToRead()
+                    true
+                }
+
+                R.id.verify_file_hash -> {
+                    Toast.makeText(requireContext(), "Not implemented", Toast.LENGTH_SHORT)
+                        .show()
+                    true
+                }
+
+                else -> false
+            }
+        }
+    }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
 
     override fun onDestroyView() {

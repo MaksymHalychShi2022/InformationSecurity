@@ -1,8 +1,5 @@
 package com.example.informationsecurity.ui.fragments.lab5
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -11,130 +8,43 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
 import com.example.informationsecurity.R
-import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.databinding.FragmentLab5Binding
+import com.example.informationsecurity.ui.MainViewModel
+import com.example.informationsecurity.utils.FilePickerHandler
 import com.example.informationsecurity.utils.OperationState
 
 class Lab5Fragment : Fragment() {
 
-    private lateinit var loadPublicKeyLauncher: ActivityResultLauncher<Intent>
-    private lateinit var loadPrivateKeyLauncher: ActivityResultLauncher<Intent>
-    private lateinit var savePublicKeyLauncher: ActivityResultLauncher<Intent>
-    private lateinit var savePrivateKeyLauncher: ActivityResultLauncher<Intent>
-
-    private lateinit var signFilePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var verifyFilePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var saveSignatureOutputLauncher: ActivityResultLauncher<Intent>
-    private lateinit var loadSignatureOutputLauncher: ActivityResultLauncher<Intent>
-
-
-    private var _binding: FragmentLab5Binding? = null
-    private lateinit var lab5ViewModel: Lab5ViewModel
+    private val lab5ViewModel: Lab5ViewModel by viewModels()
     private val mainViewModel: MainViewModel by activityViewModels()
+    private var _binding: FragmentLab5Binding? = null
+
+    private lateinit var filePickerHandler: FilePickerHandler
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        filePickerHandler = FilePickerHandler(
+            launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                filePickerHandler.handleResult(result.resultCode, result.data)
+            }
+        )
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        lab5ViewModel = ViewModelProvider(this).get(Lab5ViewModel::class.java)
-
-        requireActivity().addMenuProvider(object : MenuProvider {
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.lab5_option_menu, menu)
-            }
-
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                return when (menuItem.itemId) {
-                    R.id.generate_keys -> {
-                        lab5ViewModel.generateKeys().observe(viewLifecycleOwner) {
-                            observeForProgressBar(it, "Keys generated!")
-                        }
-                        true
-                    }
-
-                    R.id.verify_signature -> {
-                        val inputString = binding.etInputString.text.toString()
-                        if (inputString.isEmpty()) {
-                            Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            lab5ViewModel.verifySignature(inputString)
-                                .observe(viewLifecycleOwner) { result ->
-                                    when (result) {
-                                        is OperationState.Loading -> {
-                                            mainViewModel.showProgressBar()
-                                        }
-
-                                        is OperationState.Success -> {
-                                            mainViewModel.hideProgressBar()
-                                            result.data?.let { verified ->
-                                                if (verified) {
-                                                    Toast.makeText(
-                                                        requireContext(),
-                                                        "Verified",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                } else {
-                                                    Toast.makeText(
-                                                        requireContext(),
-                                                        "Verification failed",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
-                                            }
-
-                                        }
-
-                                        is OperationState.Error -> {
-                                            mainViewModel.hideProgressBar()
-                                            Toast.makeText(
-                                                requireContext(), result.message, Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                }
-                        }
-                        true
-                    }
-
-                    R.id.sign_file -> {
-                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            type =
-                                "*/*"  // You can change this MIME type if you want to filter file types
-                        }
-                        signFilePickerLauncher.launch(intent)
-                        true
-                    }
-
-                    R.id.verify_file_signature -> {
-                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            type =
-                                "*/*"  // You can change this MIME type if you want to filter file types
-                        }
-                        verifyFilePickerLauncher.launch(intent)
-                        true
-                    }
-
-                    else -> false
-                }
-            }
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
-
         _binding = FragmentLab5Binding.inflate(inflater, container, false)
 
         // Signature Output
@@ -144,21 +54,21 @@ class Lab5Fragment : Fragment() {
         }
 
         binding.outputSignature.btnSave.setOnClickListener {
-            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type =
-                    "application/octet-stream"  // You can change this MIME type based on your needs
-                putExtra(Intent.EXTRA_TITLE, "signature.pem")  // Suggested filename
+            filePickerHandler.onFilePicked = { uri ->
+                lab5ViewModel.saveSignatureOutput(uri).observe(viewLifecycleOwner) { operation ->
+                    observeForProgressBar(operation, "Signature Saved!")
+                }
             }
-            saveSignatureOutputLauncher.launch(intent)
+            filePickerHandler.pickFileToWrite(suggestedFileName = "signature.pub")
         }
 
         binding.outputSignature.btnLoad.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
+            filePickerHandler.onFilePicked = { uri ->
+                lab5ViewModel.loadPublicKey(uri).observe(viewLifecycleOwner) { operation ->
+                    observeForProgressBar(operation, "Signature Loaded!")
+                }
             }
-            loadSignatureOutputLauncher.launch(intent)
+            filePickerHandler.pickFileToRead()
         }
 
         // Public Key Output
@@ -168,22 +78,21 @@ class Lab5Fragment : Fragment() {
         }
 
         binding.outputPublicKey.btnSave.setOnClickListener {
-            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type =
-                    "application/octet-stream"  // You can change this MIME type based on your needs
-                putExtra(Intent.EXTRA_TITLE, "id_rsa.pub")  // Suggested filename
+            filePickerHandler.onFilePicked = { uri ->
+                lab5ViewModel.savePublicKey(uri).observe(viewLifecycleOwner) { operation ->
+                    observeForProgressBar(operation, "Public Key Saved!")
+                }
             }
-            savePublicKeyLauncher.launch(intent)
+            filePickerHandler.pickFileToWrite(suggestedFileName = "id_rsa.pub")
         }
 
         binding.outputPublicKey.btnLoad.setOnClickListener {
-            // Open the file picker when button is clicked
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
+            filePickerHandler.onFilePicked = { uri ->
+                lab5ViewModel.loadPublicKey(uri).observe(viewLifecycleOwner) { operation ->
+                    observeForProgressBar(operation, "Public Key Loaded!")
+                }
             }
-            loadPublicKeyLauncher.launch(intent)
+            filePickerHandler.pickFileToRead()
         }
 
         // Private Key Output
@@ -193,22 +102,21 @@ class Lab5Fragment : Fragment() {
         }
 
         binding.outputPrivateKey.btnSave.setOnClickListener {
-            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type =
-                    "application/octet-stream"  // You can change this MIME type based on your needs
-                putExtra(Intent.EXTRA_TITLE, "id_rsa")  // Suggested filename
+            filePickerHandler.onFilePicked = { uri ->
+                lab5ViewModel.savePublicKey(uri).observe(viewLifecycleOwner) { operation ->
+                    observeForProgressBar(operation, "Private Key Saved!")
+                }
             }
-            savePrivateKeyLauncher.launch(intent)
+            filePickerHandler.pickFileToWrite(suggestedFileName = "id_rsa")
         }
 
         binding.outputPrivateKey.btnLoad.setOnClickListener {
-            // Open the file picker when button is clicked
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
+            filePickerHandler.onFilePicked = { uri ->
+                lab5ViewModel.loadPublicKey(uri).observe(viewLifecycleOwner) { operation ->
+                    observeForProgressBar(operation, "Private Key Loaded!")
+                }
             }
-            loadPrivateKeyLauncher.launch(intent)
+            filePickerHandler.pickFileToRead()
         }
 
         // Sign
@@ -223,84 +131,32 @@ class Lab5Fragment : Fragment() {
             }
         }
 
+        setupOptionMenu()
+
         return binding.root
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    private fun setupOptionMenu() = requireActivity().addMenuProvider(object : MenuProvider {
+        override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+            menuInflater.inflate(R.menu.lab5_option_menu, menu)
+        }
 
-        loadPublicKeyLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Process the selected file's Uri for reading
-                        lab5ViewModel.loadPublicKey(it).observe(viewLifecycleOwner) { operation ->
-                            observeForProgressBar(operation, "Public Key Loaded!")
-                        }
+        override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+            return when (menuItem.itemId) {
+                R.id.generate_keys -> {
+                    lab5ViewModel.generateKeys().observe(viewLifecycleOwner) {
+                        observeForProgressBar(it, "Keys generated!")
                     }
+                    true
                 }
-            }
 
-        savePublicKeyLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Write data to the selected Uri
-                        lab5ViewModel.savePublicKey(it).observe(viewLifecycleOwner) { operation ->
-                            observeForProgressBar(operation, "Public Key Saved!")
-                        }
-                    }
-                }
-            }
-
-        // Launchers for loading and saving private keys
-        loadPrivateKeyLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Process the selected file's Uri for reading
-                        lab5ViewModel.loadPrivateKey(it).observe(viewLifecycleOwner) { operation ->
-                            observeForProgressBar(operation, "Private Key Loaded!")
-                        }
-                    }
-                }
-            }
-
-        savePrivateKeyLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Write data to the selected Uri
-                        lab5ViewModel.savePrivateKey(it).observe(viewLifecycleOwner) { operation ->
-                            observeForProgressBar(operation, "Private Key Saved!")
-                        }
-                    }
-                }
-            }
-
-        signFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri = result.data?.data
-
-                    uri?.let {
-                        lab5ViewModel.sign(it).observe(viewLifecycleOwner) { operation ->
-                            observeForProgressBar(operation, "Signed!")
-                        }
-                    }
-                }
-            }
-
-        verifyFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri = result.data?.data
-                    uri?.let {
-                        lab5ViewModel.verifyFileSignature(it)
+                R.id.verify_signature -> {
+                    val inputString = binding.etInputString.text.toString()
+                    if (inputString.isEmpty()) {
+                        Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT)
+                            .show()
+                    } else {
+                        lab5ViewModel.verifySignature(inputString)
                             .observe(viewLifecycleOwner) { result ->
                                 when (result) {
                                     is OperationState.Loading -> {
@@ -312,7 +168,9 @@ class Lab5Fragment : Fragment() {
                                         result.data?.let { verified ->
                                             if (verified) {
                                                 Toast.makeText(
-                                                    requireContext(), "Verified", Toast.LENGTH_SHORT
+                                                    requireContext(),
+                                                    "Verified",
+                                                    Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
                                                 Toast.makeText(
@@ -334,36 +192,65 @@ class Lab5Fragment : Fragment() {
                                 }
                             }
                     }
+                    true
                 }
-            }
 
-        saveSignatureOutputLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Write data to the selected Uri
-                        lab5ViewModel.saveSignatureOutput(it)
-                            .observe(viewLifecycleOwner) { operation ->
-                                observeForProgressBar(operation, "Signature Saved!")
-                            }
-                    }
-                }
-            }
-
-        loadSignatureOutputLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        // Process the selected file's Uri for reading
-                        lab5ViewModel.loadSignature(it).observe(viewLifecycleOwner) { operation ->
-                            observeForProgressBar(operation, "Signature Loaded!")
+                R.id.sign_file -> {
+                    filePickerHandler.onFilePicked = { uri ->
+                        lab5ViewModel.sign(uri).observe(viewLifecycleOwner) { operation ->
+                            observeForProgressBar(operation, "Signed!")
                         }
                     }
+                    filePickerHandler.pickFileToRead()
+                    true
                 }
+
+                R.id.verify_file_signature -> {
+                    filePickerHandler.onFilePicked = { uri ->
+                        lab5ViewModel.verifyFileSignature(uri)
+                            .observe(viewLifecycleOwner) { result ->
+                                when (result) {
+                                    is OperationState.Loading -> {
+                                        mainViewModel.showProgressBar()
+                                    }
+
+                                    is OperationState.Success -> {
+                                        mainViewModel.hideProgressBar()
+                                        result.data?.let { verified ->
+                                            if (verified) {
+                                                Toast.makeText(
+                                                    requireContext(),
+                                                    "Verified",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                Toast.makeText(
+                                                    requireContext(),
+                                                    "Verification failed",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+
+                                    }
+
+                                    is OperationState.Error -> {
+                                        mainViewModel.hideProgressBar()
+                                        Toast.makeText(
+                                            requireContext(), result.message, Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
+                    }
+                    filePickerHandler.pickFileToRead()
+                    true
+                }
+
+                else -> false
             }
-    }
+        }
+    }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
 
     private fun observeForProgressBar(result: OperationState<*>, successMassage: String? = null) {
