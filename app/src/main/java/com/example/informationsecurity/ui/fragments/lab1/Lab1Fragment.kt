@@ -14,34 +14,33 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab1Binding
-import com.example.informationsecurity.ui.MainViewModel
-import com.example.informationsecurity.utils.OperationState
+import com.example.informationsecurity.utils.FilePickerHandler
 
 class Lab1Fragment : Fragment() {
 
+    private val lab1ViewModel: Lab1ViewModel by viewModels()
     private var _binding: FragmentLab1Binding? = null
-    private val viewModel: Lab1ViewModel by viewModels()
-    private val mainViewModel: MainViewModel by activityViewModels()
+
+    private lateinit var filePickerHandler: FilePickerHandler
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
-    // Register the file picker
-    private val createFileLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.data?.also { uri ->
-                    saveFile(uri, viewModel.generatedNumbers.value ?: "")
-                }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        filePickerHandler = FilePickerHandler(
+            launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                filePickerHandler.handleResult(result.resultCode, result.data)
             }
-        }
+        )
+    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -73,74 +72,41 @@ class Lab1Fragment : Fragment() {
                     Toast.makeText(context, "Invalid input!", Toast.LENGTH_LONG).show()
                     return@setOnClickListener
                 }
-                viewModel.generateRandomNumbers(length).observe(viewLifecycleOwner) {
-                    observeForProgressBar(it, "Generated")
-                }
+                lab1ViewModel.runWithProgress(
+                    task = { lab1ViewModel.generateRandomNumbers(length) },
+                    onSuccessMessage = "Generated!"
+                )
             }
         }
 
         // Generated Numbers Output
         binding.outputGeneratedNumbers.tvLabel.text =
             requireContext().getString(R.string.generated_numbers)
-        viewModel.generatedNumbers.observe(viewLifecycleOwner) {
+        lab1ViewModel.generatedNumbers.observe(viewLifecycleOwner) {
             binding.outputGeneratedNumbers.tvScrollableText.text = it
         }
 
         binding.outputGeneratedNumbers.btnSave.setOnClickListener {
-            Toast.makeText(requireContext(), "Not implemented", Toast.LENGTH_SHORT).show()
+            filePickerHandler.onFilePicked = { uri ->
+                lab1ViewModel.runWithProgress(
+                    task = { lab1ViewModel.saveGeneratedNumbers(uri) },
+                    onSuccessMessage = "Saved!"
+                )
+            }
+            filePickerHandler.pickFileToWrite(suggestedFileName = "numbers.txt")
         }
 
         binding.outputGeneratedNumbers.btnLoad.setOnClickListener {
-            Toast.makeText(requireContext(), "Not implemented", Toast.LENGTH_SHORT).show()
+            filePickerHandler.onFilePicked = { uri ->
+                lab1ViewModel.runWithProgress(
+                    task = { lab1ViewModel.loadGeneratedNumbers(uri) },
+                    onSuccessMessage = "Loaded!"
+                )
+            }
+            filePickerHandler.pickFileToRead("*/*")
         }
 
         return binding.root
-    }
-
-
-    // Open the file picker dialog to save the file
-    private fun openSaveFileDialog() {
-
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "text/plain" // You can specify other types like "application/json" for JSON
-            putExtra(Intent.EXTRA_TITLE, "random_numbers.txt") // Default filename
-        }
-        createFileLauncher.launch(intent)
-    }
-
-    // Save the file to the chosen location
-    private fun saveFile(uri: Uri, content: String) {
-        try {
-            // Use requireContext() to get the context from the Fragment
-            requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
-                outputStream.write(content.toByteArray())
-            }
-            Toast.makeText(requireContext(), "File saved successfully!", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(requireContext(), "Failed to save file!", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun observeForProgressBar(result: OperationState<*>, successMassage: String? = null) {
-        when (result) {
-            is OperationState.Loading -> {
-                mainViewModel.showProgressBar()
-            }
-
-            is OperationState.Success -> {
-                successMassage?.let {
-                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-                }
-                mainViewModel.hideProgressBar()
-            }
-
-            is OperationState.Error -> {
-                Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
-                mainViewModel.hideProgressBar()
-            }
-        }
     }
 
     override fun onDestroyView() {

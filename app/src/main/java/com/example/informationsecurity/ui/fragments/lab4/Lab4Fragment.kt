@@ -7,23 +7,18 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab4Binding
-import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.utils.FilePickerHandler
-import com.example.informationsecurity.utils.OperationState
 
 class Lab4Fragment : Fragment() {
 
     private val lab4ViewModel: Lab4ViewModel by viewModels()
-    private val mainViewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentLab4Binding? = null
 
     private lateinit var filePickerHandler: FilePickerHandler
@@ -55,18 +50,20 @@ class Lab4Fragment : Fragment() {
 
         binding.outputPublicKey.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab4ViewModel.savePublicKey(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Public Key Saved!")
-                }
+                lab4ViewModel.runWithProgress(
+                    task = { lab4ViewModel.savePublicKey(uri) },
+                    onSuccessMessage = "Public Key Saved!"
+                )
             }
             filePickerHandler.pickFileToWrite(suggestedFileName = "id_rsa.pub")
         }
 
         binding.outputPublicKey.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab4ViewModel.loadPublicKey(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Public Key Loaded!")
-                }
+                lab4ViewModel.runWithProgress(
+                    task = { lab4ViewModel.loadPublicKey(uri) },
+                    onSuccessMessage = "Public Key Loaded!"
+                )
             }
             filePickerHandler.pickFileToRead()
         }
@@ -79,18 +76,20 @@ class Lab4Fragment : Fragment() {
 
         binding.outputPrivateKey.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab4ViewModel.savePublicKey(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Private Key Saved!")
-                }
+                lab4ViewModel.runWithProgress(
+                    task = { lab4ViewModel.savePrivateKey(uri) },
+                    onSuccessMessage = "Private Key Saved!"
+                )
             }
             filePickerHandler.pickFileToWrite(suggestedFileName = "id_rsa")
         }
 
         binding.outputPrivateKey.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab4ViewModel.loadPublicKey(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Private Key Loaded!")
-                }
+                lab4ViewModel.runWithProgress(
+                    task = { lab4ViewModel.loadPrivateKey(uri) },
+                    onSuccessMessage = "Private Key Loaded!"
+                )
             }
             filePickerHandler.pickFileToRead()
         }
@@ -108,23 +107,26 @@ class Lab4Fragment : Fragment() {
         override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
             return when (menuItem.itemId) {
                 R.id.generate_keys -> {
-                    lab4ViewModel.generateKeys().observe(viewLifecycleOwner) {
-                        observeForProgressBar(it, "Keys generated!")
-                    }
+
+                    lab4ViewModel.runWithProgress(
+                        task = { lab4ViewModel.generateKeys() },
+                        onSuccessMessage = "Keys generated!"
+                    )
+
                     true
                 }
 
                 R.id.encrypt_file -> {
+
                     filePickerHandler.onFilePicked = { inputUri ->
                         filePickerHandler.onFilePicked = { outputUri ->
-                            lab4ViewModel.encryptFile(inputUri, outputUri)
-                                .observe(viewLifecycleOwner) { result ->
-                                    observeForProgressBar(result, "Encrypted!")
-                                }
+                            lab4ViewModel.runWithProgress(
+                                task = { lab4ViewModel.encryptFile(inputUri, outputUri) },
+                                onSuccessMessage = "Encrypted!"
+                            )
                         }
                         filePickerHandler.pickFileToWrite(
-                            "application/octet-stream",
-                            "encrypted.txt"
+                            suggestedFileName = "encrypted.txt"
                         )
                     }
                     filePickerHandler.pickFileToRead("*/*")
@@ -132,16 +134,17 @@ class Lab4Fragment : Fragment() {
                 }
 
                 R.id.decrypt_file -> {
+
                     filePickerHandler.onFilePicked = { inputUri ->
                         filePickerHandler.onFilePicked = { outputUri ->
-                            lab4ViewModel.decryptFile(inputUri, outputUri)
-                                .observe(viewLifecycleOwner) { result ->
-                                    observeForProgressBar(result, "Decrypted!")
-                                }
+                            lab4ViewModel.runWithProgress(
+                                task = { lab4ViewModel.decryptFile(inputUri, outputUri) },
+                                onSuccessMessage = "Decrypted!"
+                            )
+
                         }
                         filePickerHandler.pickFileToWrite(
-                            "application/octet-stream",
-                            "decrypted.txt"
+                            suggestedFileName = "decrypted.txt"
                         )
                     }
                     filePickerHandler.pickFileToRead("*/*")
@@ -152,27 +155,6 @@ class Lab4Fragment : Fragment() {
             }
         }
     }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
-
-    private fun observeForProgressBar(result: OperationState<*>, successMassage: String? = null) {
-        when (result) {
-            is OperationState.Loading -> {
-                mainViewModel.showProgressBar()
-            }
-
-            is OperationState.Success -> {
-                successMassage?.let {
-                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-                }
-                mainViewModel.hideProgressBar()
-            }
-
-            is OperationState.Error -> {
-                Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
-                mainViewModel.hideProgressBar()
-            }
-        }
-    }
 
 
     override fun onDestroyView() {

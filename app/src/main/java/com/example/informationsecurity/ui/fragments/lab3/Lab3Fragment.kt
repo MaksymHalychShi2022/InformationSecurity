@@ -6,7 +6,6 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -14,12 +13,10 @@ import androidx.fragment.app.viewModels
 import com.example.informationsecurity.databinding.FragmentLab3Binding
 import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.utils.FilePickerHandler
-import com.example.informationsecurity.utils.OperationState
 
 class Lab3Fragment : Fragment() {
 
     private val lab3ViewModel: Lab3ViewModel by viewModels()
-    private val mainViewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentLab3Binding? = null
 
     private lateinit var filePickerHandler: FilePickerHandler
@@ -31,11 +28,10 @@ class Lab3Fragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        filePickerHandler = FilePickerHandler(
-            launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        filePickerHandler =
+            FilePickerHandler(launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 filePickerHandler.handleResult(result.resultCode, result.data)
-            }
-        )
+            })
     }
 
 
@@ -68,10 +64,10 @@ class Lab3Fragment : Fragment() {
         binding.btnEncryptFile.setOnClickListener {
             filePickerHandler.onFilePicked = { inputUri ->
                 filePickerHandler.onFilePicked = { outputUri ->
-                    lab3ViewModel.encryptFile(inputUri, outputUri)
-                        .observe(viewLifecycleOwner) { result ->
-                            observeForProgressBar(result, "Encrypted!")
-                        }
+                    lab3ViewModel.runWithProgress(
+                        task = { lab3ViewModel.encryptFile(inputUri, outputUri) },
+                        onSuccessMessage = "Encrypted!"
+                    )
                 }
                 filePickerHandler.pickFileToWrite("application/octet-stream", "encrypted.txt")
             }
@@ -81,10 +77,10 @@ class Lab3Fragment : Fragment() {
         binding.btnDecryptFile.setOnClickListener {
             filePickerHandler.onFilePicked = { inputUri ->
                 filePickerHandler.onFilePicked = { outputUri ->
-                    lab3ViewModel.decryptFile(inputUri, outputUri)
-                        .observe(viewLifecycleOwner) { result ->
-                            observeForProgressBar(result, "Decrypted!")
-                        }
+                    lab3ViewModel.runWithProgress(
+                        task = { lab3ViewModel.decryptFile(inputUri, outputUri) },
+                        onSuccessMessage = "Decrypted!"
+                    )
                 }
                 filePickerHandler.pickFileToWrite("application/octet-stream", "decrypted.txt")
             }
@@ -92,27 +88,6 @@ class Lab3Fragment : Fragment() {
         }
 
         return binding.root
-    }
-
-
-    private fun observeForProgressBar(result: OperationState<*>, successMassage: String? = null) {
-        when (result) {
-            is OperationState.Loading -> {
-                mainViewModel.showProgressBar()
-            }
-
-            is OperationState.Success -> {
-                successMassage?.let {
-                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-                }
-                mainViewModel.hideProgressBar()
-            }
-
-            is OperationState.Error -> {
-                Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
-                mainViewModel.hideProgressBar()
-            }
-        }
     }
 
 

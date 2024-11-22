@@ -18,12 +18,10 @@ import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab5Binding
 import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.utils.FilePickerHandler
-import com.example.informationsecurity.utils.OperationState
 
 class Lab5Fragment : Fragment() {
 
     private val lab5ViewModel: Lab5ViewModel by viewModels()
-    private val mainViewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentLab5Binding? = null
 
     private lateinit var filePickerHandler: FilePickerHandler
@@ -35,11 +33,10 @@ class Lab5Fragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        filePickerHandler = FilePickerHandler(
-            launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        filePickerHandler =
+            FilePickerHandler(launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 filePickerHandler.handleResult(result.resultCode, result.data)
-            }
-        )
+            })
     }
 
     override fun onCreateView(
@@ -49,24 +46,26 @@ class Lab5Fragment : Fragment() {
 
         // Signature Output
         binding.outputSignature.tvLabel.text = requireContext().getString(R.string.signature)
-        lab5ViewModel.signatureOutput.observe(viewLifecycleOwner) {
+        lab5ViewModel.signature.observe(viewLifecycleOwner) {
             binding.outputSignature.tvScrollableText.text = it
         }
 
         binding.outputSignature.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab5ViewModel.saveSignatureOutput(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Signature Saved!")
-                }
+                lab5ViewModel.runWithProgress(
+                    task = { lab5ViewModel.saveSignature(uri) },
+                    onSuccessMessage = "Signature Saved!"
+                )
             }
             filePickerHandler.pickFileToWrite(suggestedFileName = "signature.pub")
         }
 
         binding.outputSignature.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab5ViewModel.loadSignature(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Signature Loaded!")
-                }
+                lab5ViewModel.runWithProgress(
+                    task = { lab5ViewModel.loadSignature(uri) },
+                    onSuccessMessage = "Signature Loaded!"
+                )
             }
             filePickerHandler.pickFileToRead()
         }
@@ -79,18 +78,20 @@ class Lab5Fragment : Fragment() {
 
         binding.outputPublicKey.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab5ViewModel.savePublicKey(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Public Key Saved!")
-                }
+                lab5ViewModel.runWithProgress(
+                    task = { lab5ViewModel.savePublicKey(uri) },
+                    onSuccessMessage = "Public Key Saved!"
+                )
             }
             filePickerHandler.pickFileToWrite(suggestedFileName = "id_rsa.pub")
         }
 
         binding.outputPublicKey.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab5ViewModel.loadPublicKey(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Public Key Loaded!")
-                }
+                lab5ViewModel.runWithProgress(
+                    task = { lab5ViewModel.loadPublicKey(uri) },
+                    onSuccessMessage = "Public Key Loaded!"
+                )
             }
             filePickerHandler.pickFileToRead()
         }
@@ -103,18 +104,20 @@ class Lab5Fragment : Fragment() {
 
         binding.outputPrivateKey.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab5ViewModel.savePrivateKey(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Private Key Saved!")
-                }
+                lab5ViewModel.runWithProgress(
+                    task = { lab5ViewModel.savePrivateKey(uri) },
+                    onSuccessMessage = "Private Key Saved!"
+                )
             }
             filePickerHandler.pickFileToWrite(suggestedFileName = "id_rsa")
         }
 
         binding.outputPrivateKey.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab5ViewModel.loadPrivateKey(uri).observe(viewLifecycleOwner) { operation ->
-                    observeForProgressBar(operation, "Private Key Loaded!")
-                }
+                lab5ViewModel.runWithProgress(
+                    task = { lab5ViewModel.loadPrivateKey(uri) },
+                    onSuccessMessage = "Private Key Loaded!"
+                )
             }
             filePickerHandler.pickFileToRead()
         }
@@ -126,9 +129,9 @@ class Lab5Fragment : Fragment() {
                 Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            lab5ViewModel.sign(inputString).observe(viewLifecycleOwner) {
-                observeForProgressBar(it, "Signed!")
-            }
+            lab5ViewModel.runWithProgress(
+                task = { lab5ViewModel.sign(inputString) }, onSuccessMessage = "Signed!"
+            )
         }
 
         setupOptionMenu()
@@ -144,62 +147,42 @@ class Lab5Fragment : Fragment() {
         override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
             return when (menuItem.itemId) {
                 R.id.generate_keys -> {
-                    lab5ViewModel.generateKeys().observe(viewLifecycleOwner) {
-                        observeForProgressBar(it, "Keys generated!")
-                    }
+                    lab5ViewModel.runWithProgress(
+                        task = { lab5ViewModel.generateKeys() },
+                        onSuccessMessage = "Keys generated!"
+                    )
                     true
                 }
 
                 R.id.verify_signature -> {
                     val inputString = binding.etInputString.text.toString()
                     if (inputString.isEmpty()) {
-                        Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT)
-                            .show()
+                        Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
                     } else {
-                        lab5ViewModel.verifySignature(inputString)
-                            .observe(viewLifecycleOwner) { result ->
-                                when (result) {
-                                    is OperationState.Loading -> {
-                                        mainViewModel.showProgressBar()
-                                    }
-
-                                    is OperationState.Success -> {
-                                        mainViewModel.hideProgressBar()
-                                        result.data?.let { verified ->
-                                            if (verified) {
-                                                Toast.makeText(
-                                                    requireContext(),
-                                                    "Verified",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                Toast.makeText(
-                                                    requireContext(),
-                                                    "Verification failed",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-
-                                    }
-
-                                    is OperationState.Error -> {
-                                        mainViewModel.hideProgressBar()
-                                        Toast.makeText(
-                                            requireContext(), result.message, Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            }
+                        lab5ViewModel.runWithProgress(task = {
+                            lab5ViewModel.verifySignature(
+                                inputString
+                            )
+                        },
+                            onSuccess = { verified: Boolean ->
+                                Toast.makeText(
+                                    requireContext(), if (verified) {
+                                        "Verified"
+                                    } else {
+                                        "Verification failed"
+                                    }, Toast.LENGTH_SHORT
+                                ).show()
+                            })
                     }
                     true
+
                 }
 
                 R.id.sign_file -> {
                     filePickerHandler.onFilePicked = { uri ->
-                        lab5ViewModel.sign(uri).observe(viewLifecycleOwner) { operation ->
-                            observeForProgressBar(operation, "Signed!")
-                        }
+                        lab5ViewModel.runWithProgress(
+                            task = { lab5ViewModel.sign(uri) }, onSuccessMessage = "Signed!"
+                        )
                     }
                     filePickerHandler.pickFileToRead()
                     true
@@ -207,41 +190,16 @@ class Lab5Fragment : Fragment() {
 
                 R.id.verify_file_signature -> {
                     filePickerHandler.onFilePicked = { uri ->
-                        lab5ViewModel.verifyFileSignature(uri)
-                            .observe(viewLifecycleOwner) { result ->
-                                when (result) {
-                                    is OperationState.Loading -> {
-                                        mainViewModel.showProgressBar()
-                                    }
-
-                                    is OperationState.Success -> {
-                                        mainViewModel.hideProgressBar()
-                                        result.data?.let { verified ->
-                                            if (verified) {
-                                                Toast.makeText(
-                                                    requireContext(),
-                                                    "Verified",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                Toast.makeText(
-                                                    requireContext(),
-                                                    "Verification failed",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-
-                                    }
-
-                                    is OperationState.Error -> {
-                                        mainViewModel.hideProgressBar()
-                                        Toast.makeText(
-                                            requireContext(), result.message, Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            }
+                        lab5ViewModel.runWithProgress(task = { lab5ViewModel.verifyFileSignature(uri) },
+                            onSuccess = { verified: Boolean ->
+                                Toast.makeText(
+                                    requireContext(), if (verified) {
+                                        "Verified"
+                                    } else {
+                                        "Verification failed"
+                                    }, Toast.LENGTH_SHORT
+                                ).show()
+                            })
                     }
                     filePickerHandler.pickFileToRead()
                     true
@@ -251,28 +209,6 @@ class Lab5Fragment : Fragment() {
             }
         }
     }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
-
-    private fun observeForProgressBar(result: OperationState<*>, successMassage: String? = null) {
-        when (result) {
-            is OperationState.Loading -> {
-                mainViewModel.showProgressBar()
-            }
-
-            is OperationState.Success -> {
-                successMassage?.let {
-                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-                }
-                mainViewModel.hideProgressBar()
-            }
-
-            is OperationState.Error -> {
-                Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
-                mainViewModel.hideProgressBar()
-            }
-        }
-    }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

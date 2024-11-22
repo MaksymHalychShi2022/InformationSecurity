@@ -11,19 +11,15 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab2Binding
-import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.utils.FilePickerHandler
-import com.example.informationsecurity.utils.OperationState
 
 class Lab2Fragment : Fragment() {
 
     private val lab2ViewModel: Lab2ViewModel by viewModels()
-    private val mainViewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentLab2Binding? = null
 
     private lateinit var filePickerHandler: FilePickerHandler
@@ -47,6 +43,7 @@ class Lab2Fragment : Fragment() {
     ): View {
         _binding = FragmentLab2Binding.inflate(inflater, container, false)
 
+
         binding.btnHash.setOnClickListener {
             val inputString = binding.etInputString.text.toString()
             if (inputString.isEmpty()) {
@@ -54,50 +51,40 @@ class Lab2Fragment : Fragment() {
                 return@setOnClickListener
             }
 
-            lab2ViewModel.hash(inputString).observe(viewLifecycleOwner, ::observeForProgressBar)
+            lab2ViewModel.runWithProgress(
+                task = { lab2ViewModel.hash(inputString) }
+            )
         }
 
         // Hash Output
         binding.outputHash.tvLabel.text = requireContext().getString(R.string.hash)
-        lab2ViewModel.output.observe(viewLifecycleOwner) {
+        lab2ViewModel.hash.observe(viewLifecycleOwner) {
             binding.outputHash.tvScrollableText.text = it
         }
 
         binding.outputHash.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab2ViewModel.output.value?.let { output ->
-                    lab2ViewModel.writeToFileUri(uri, output)
-                        .observe(viewLifecycleOwner, ::observeForProgressBar)
-                }
+                lab2ViewModel.runWithProgress(
+                    task = { lab2ViewModel.saveHash(uri) },
+                    onSuccessMessage = "Hash Saved!"
+                )
             }
-            filePickerHandler.pickFileToWrite("application/octet-stream", "hash.md5")
+            filePickerHandler.pickFileToWrite(suggestedFileName = "hash.md5")
         }
 
         binding.outputHash.btnLoad.setOnClickListener {
-
+            filePickerHandler.onFilePicked = { uri ->
+                lab2ViewModel.runWithProgress(
+                    task = { lab2ViewModel.loadHash(uri) },
+                    onSuccessMessage = "Hash Loaded!"
+                )
+            }
+            filePickerHandler.pickFileToRead()
         }
 
         setupOptionMenu()
 
         return binding.root
-    }
-
-
-    private fun observeForProgressBar(result: OperationState<*>) {
-        when (result) {
-            is OperationState.Loading -> {
-                mainViewModel.showProgressBar()
-            }
-
-            is OperationState.Success -> {
-                mainViewModel.hideProgressBar()
-            }
-
-            is OperationState.Error -> {
-                Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
-                mainViewModel.hideProgressBar()
-            }
-        }
     }
 
     private fun setupOptionMenu() = requireActivity().addMenuProvider(object : MenuProvider {
@@ -110,8 +97,9 @@ class Lab2Fragment : Fragment() {
                 R.id.hash_file -> {
                     // Open the file picker when button is clicked
                     filePickerHandler.onFilePicked = { uri ->
-                        lab2ViewModel.hash(uri)
-                            .observe(viewLifecycleOwner, ::observeForProgressBar)
+                        lab2ViewModel.runWithProgress(
+                            task = { lab2ViewModel.hash(uri) }
+                        )
                     }
                     filePickerHandler.pickFileToRead()
                     true
