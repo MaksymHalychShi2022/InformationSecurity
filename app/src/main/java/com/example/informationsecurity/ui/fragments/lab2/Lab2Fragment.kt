@@ -7,50 +7,39 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab2Binding
 import com.example.informationsecurity.ui.MainViewModel
-import com.example.informationsecurity.utils.FilePickerHandler
+import com.example.informationsecurity.ui.fragments.BaseFragment
 
-class Lab2Fragment : Fragment() {
+class Lab2Fragment : BaseFragment<FragmentLab2Binding>() {
 
     private val lab2ViewModel: Lab2ViewModel by viewModels()
     private val mainViewModel: MainViewModel by activityViewModels()
-    private var _binding: FragmentLab2Binding? = null
-
-    private lateinit var filePickerHandler: FilePickerHandler
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        filePickerHandler = FilePickerHandler(
-            launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                filePickerHandler.handleResult(result.resultCode, result.data)
-            }
-        )
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentLab2Binding.inflate(inflater, container, false)
+        return inflateBinding(inflater, container, FragmentLab2Binding::inflate).root
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
+        setupHashButton()
+        setupHashOutput()
+        setupOptionMenu()
+    }
+
+    private fun setupHashButton() {
         binding.btnHash.setOnClickListener {
             val inputString = binding.etInputString.text.toString()
             if (inputString.isEmpty()) {
-                Toast.makeText(requireContext(), "Empty String!", Toast.LENGTH_SHORT).show()
+                showToast("Empty String!")
                 return@setOnClickListener
             }
 
@@ -58,36 +47,18 @@ class Lab2Fragment : Fragment() {
                 task = { lab2ViewModel.hash(inputString) }
             )
         }
+    }
 
-        // Hash Output
-        binding.outputHash.tvLabel.text = requireContext().getString(R.string.hash)
-        lab2ViewModel.hash.observe(viewLifecycleOwner) {
-            binding.outputHash.tvScrollableText.text = it
-        }
-
-        binding.outputHash.btnSave.setOnClickListener {
-            filePickerHandler.onFilePicked = { uri ->
-                mainViewModel.runWithProgress(
-                    task = { lab2ViewModel.saveHash(uri) },
-                    onSuccessMessage = "Hash Saved!"
-                )
-            }
-            filePickerHandler.pickFileToWrite(suggestedFileName = "hash.md5")
-        }
-
-        binding.outputHash.btnLoad.setOnClickListener {
-            filePickerHandler.onFilePicked = { uri ->
-                mainViewModel.runWithProgress(
-                    task = { lab2ViewModel.loadHash(uri) },
-                    onSuccessMessage = "Hash Loaded!"
-                )
-            }
-            filePickerHandler.pickFileToRead()
-        }
-
-        setupOptionMenu()
-
-        return binding.root
+    private fun setupHashOutput() {
+        // Setup the hash output section
+        setupOutputSection(
+            outputView = binding.outputHash,
+            labelResId = R.string.hash,
+            data = lab2ViewModel.hash,
+            saveTask = { lab2ViewModel.saveHash(it) },
+            loadTask = { lab2ViewModel.loadHash(it) },
+            suggestedFileName = "hash.md5"
+        )
     }
 
     private fun setupOptionMenu() = requireActivity().addMenuProvider(object : MenuProvider {
@@ -97,31 +68,25 @@ class Lab2Fragment : Fragment() {
 
         override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
             return when (menuItem.itemId) {
-                R.id.hash_file -> {
-                    // Open the file picker when button is clicked
-                    filePickerHandler.onFilePicked = { uri ->
-                        mainViewModel.runWithProgress(
-                            task = { lab2ViewModel.hash(uri) }
-                        )
-                    }
-                    filePickerHandler.pickFileToRead()
-                    true
-                }
-
-                R.id.verify_file_hash -> {
-                    Toast.makeText(requireContext(), "Not implemented", Toast.LENGTH_SHORT)
-                        .show()
-                    true
-                }
-
+                R.id.hash_file -> handleHashFile()
+                R.id.verify_file_hash -> handleVerifyFileHash()
                 else -> false
             }
         }
+
+        private fun handleHashFile(): Boolean {
+            filePickerHandler.onFilePicked = { uri ->
+                mainViewModel.runWithProgress(
+                    task = { lab2ViewModel.hash(uri) }
+                )
+            }
+            filePickerHandler.pickFileToRead()
+            return true
+        }
+
+        private fun handleVerifyFileHash(): Boolean {
+            showToast("Not implemented")
+            return true
+        }
     }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
 }

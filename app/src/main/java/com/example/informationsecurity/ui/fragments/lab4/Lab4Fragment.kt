@@ -7,99 +7,53 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab4Binding
 import com.example.informationsecurity.ui.MainViewModel
-import com.example.informationsecurity.utils.FilePickerHandler
+import com.example.informationsecurity.ui.fragments.BaseFragment
 
-class Lab4Fragment : Fragment() {
+class Lab4Fragment : BaseFragment<FragmentLab4Binding>() {
 
     private val lab4ViewModel: Lab4ViewModel by viewModels()
     private val mainViewModel: MainViewModel by activityViewModels()
-    private var _binding: FragmentLab4Binding? = null
-
-    private lateinit var filePickerHandler: FilePickerHandler
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        filePickerHandler = FilePickerHandler(
-            launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                filePickerHandler.handleResult(result.resultCode, result.data)
-            }
-        )
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentLab4Binding.inflate(inflater, container, false)
+        return inflateBinding(inflater, container, FragmentLab4Binding::inflate).root
+    }
 
-        // Public Key Output
-        binding.outputPublicKey.tvLabel.text = requireContext().getString(R.string.public_key)
-        lab4ViewModel.publicKey.observe(viewLifecycleOwner) {
-            binding.outputPublicKey.tvScrollableText.text = it
-        }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        binding.outputPublicKey.btnSave.setOnClickListener {
-            filePickerHandler.onFilePicked = { uri ->
-                mainViewModel.runWithProgress(
-                    task = { lab4ViewModel.savePublicKey(uri) },
-                    onSuccessMessage = "Public Key Saved!"
-                )
-            }
-            filePickerHandler.pickFileToWrite(suggestedFileName = "id_rsa.pub")
-        }
-
-        binding.outputPublicKey.btnLoad.setOnClickListener {
-            filePickerHandler.onFilePicked = { uri ->
-                mainViewModel.runWithProgress(
-                    task = { lab4ViewModel.loadPublicKey(uri) },
-                    onSuccessMessage = "Public Key Loaded!"
-                )
-            }
-            filePickerHandler.pickFileToRead()
-        }
-
-        // Private Key Output
-        binding.outputPrivateKey.tvLabel.text = requireContext().getString(R.string.private_key)
-        lab4ViewModel.privateKey.observe(viewLifecycleOwner) {
-            binding.outputPrivateKey.tvScrollableText.text = it
-        }
-
-        binding.outputPrivateKey.btnSave.setOnClickListener {
-            filePickerHandler.onFilePicked = { uri ->
-                mainViewModel.runWithProgress(
-                    task = { lab4ViewModel.savePrivateKey(uri) },
-                    onSuccessMessage = "Private Key Saved!"
-                )
-            }
-            filePickerHandler.pickFileToWrite(suggestedFileName = "id_rsa")
-        }
-
-        binding.outputPrivateKey.btnLoad.setOnClickListener {
-            filePickerHandler.onFilePicked = { uri ->
-                mainViewModel.runWithProgress(
-                    task = { lab4ViewModel.loadPrivateKey(uri) },
-                    onSuccessMessage = "Private Key Loaded!"
-                )
-            }
-            filePickerHandler.pickFileToRead()
-        }
-
+        setupOutputSections()
         setupOptionMenu()
+    }
 
-        return binding.root
+    private fun setupOutputSections() {
+        // Public Key Output Section
+        setupOutputSection(
+            outputView = binding.outputPublicKey,
+            labelResId = R.string.public_key,
+            data = lab4ViewModel.publicKey,
+            saveTask = { lab4ViewModel.savePublicKey(it) },
+            loadTask = { lab4ViewModel.loadPublicKey(it) },
+            suggestedFileName = "id_rsa.pub"
+        )
+
+        // Private Key Output Section
+        setupOutputSection(
+            outputView = binding.outputPrivateKey,
+            labelResId = R.string.private_key,
+            data = lab4ViewModel.privateKey,
+            saveTask = { lab4ViewModel.savePrivateKey(it) },
+            loadTask = { lab4ViewModel.loadPrivateKey(it) },
+            suggestedFileName = "id_rsa"
+        )
     }
 
     private fun setupOptionMenu() = requireActivity().addMenuProvider(object : MenuProvider {
@@ -110,58 +64,45 @@ class Lab4Fragment : Fragment() {
         override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
             return when (menuItem.itemId) {
                 R.id.generate_keys -> {
-
                     mainViewModel.runWithProgress(
                         task = { lab4ViewModel.generateKeys("RSA") },
                         onSuccessMessage = "Keys generated!"
                     )
-
                     true
                 }
 
-                R.id.encrypt_file -> {
-
-                    filePickerHandler.onFilePicked = { inputUri ->
-                        filePickerHandler.onFilePicked = { outputUri ->
-                            mainViewModel.runWithProgress(
-                                task = { lab4ViewModel.encryptFile(inputUri, outputUri) },
-                                onSuccessMessage = "Encrypted!"
-                            )
-                        }
-                        filePickerHandler.pickFileToWrite(
-                            suggestedFileName = "encrypted.txt"
-                        )
-                    }
-                    filePickerHandler.pickFileToRead("*/*")
-                    true
-                }
-
-                R.id.decrypt_file -> {
-
-                    filePickerHandler.onFilePicked = { inputUri ->
-                        filePickerHandler.onFilePicked = { outputUri ->
-                            mainViewModel.runWithProgress(
-                                task = { lab4ViewModel.decryptFile(inputUri, outputUri) },
-                                onSuccessMessage = "Decrypted!"
-                            )
-
-                        }
-                        filePickerHandler.pickFileToWrite(
-                            suggestedFileName = "decrypted.txt"
-                        )
-                    }
-                    filePickerHandler.pickFileToRead("*/*")
-                    true
-                }
-
+                R.id.encrypt_file -> handleFileEncryption()
+                R.id.decrypt_file -> handleFileDecryption()
                 else -> false
             }
         }
+
+        private fun handleFileEncryption(): Boolean {
+            filePickerHandler.onFilePicked = { inputUri ->
+                filePickerHandler.onFilePicked = { outputUri ->
+                    mainViewModel.runWithProgress(
+                        task = { lab4ViewModel.encryptFile(inputUri, outputUri) },
+                        onSuccessMessage = "Encrypted!"
+                    )
+                }
+                filePickerHandler.pickFileToWrite(suggestedFileName = "encrypted.txt")
+            }
+            filePickerHandler.pickFileToRead("*/*")
+            return true
+        }
+
+        private fun handleFileDecryption(): Boolean {
+            filePickerHandler.onFilePicked = { inputUri ->
+                filePickerHandler.onFilePicked = { outputUri ->
+                    mainViewModel.runWithProgress(
+                        task = { lab4ViewModel.decryptFile(inputUri, outputUri) },
+                        onSuccessMessage = "Decrypted!"
+                    )
+                }
+                filePickerHandler.pickFileToWrite(suggestedFileName = "decrypted.txt")
+            }
+            filePickerHandler.pickFileToRead("*/*")
+            return true
+        }
     }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
 }

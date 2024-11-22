@@ -3,12 +3,12 @@ package com.example.informationsecurity.ui.fragments
 import android.app.Application
 import android.content.ContentResolver
 import android.net.Uri
-import com.example.informationsecurity.ui.MainViewModel
+import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.OutputStream
 
-open class BaseViewModel(application: Application) : MainViewModel(application) {
+abstract class BaseViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun writeToFile(uri: Uri, content: String) {
         withContext(Dispatchers.IO) {
             // Access ContentResolver from application context

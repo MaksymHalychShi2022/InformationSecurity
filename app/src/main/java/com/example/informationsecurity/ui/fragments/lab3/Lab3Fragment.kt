@@ -6,41 +6,33 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.example.informationsecurity.databinding.FragmentLab3Binding
 import com.example.informationsecurity.ui.MainViewModel
-import com.example.informationsecurity.utils.FilePickerHandler
+import com.example.informationsecurity.ui.fragments.BaseFragment
 
-class Lab3Fragment : Fragment() {
+class Lab3Fragment : BaseFragment<FragmentLab3Binding>() {
 
     private val lab3ViewModel: Lab3ViewModel by viewModels()
     private val mainViewModel: MainViewModel by activityViewModels()
-    private var _binding: FragmentLab3Binding? = null
-
-    private lateinit var filePickerHandler: FilePickerHandler
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        filePickerHandler =
-            FilePickerHandler(launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                filePickerHandler.handleResult(result.resultCode, result.data)
-            })
-    }
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentLab3Binding.inflate(inflater, container, false)
+        return inflateBinding(inflater, container, FragmentLab3Binding::inflate).root
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        setupPassphraseListener()
+        setupFileEncryption()
+        setupFileDecryption()
+    }
+
+    private fun setupPassphraseListener() {
+        // Observe changes to passphrase from ViewModel and update the EditText
         lab3ViewModel.passphrase.observe(viewLifecycleOwner) {
             if (binding.etPassphrase.text.toString() != it) {
                 binding.etPassphrase.setText(it)
@@ -61,7 +53,9 @@ class Lab3Fragment : Fragment() {
 
             override fun afterTextChanged(s: Editable?) {}
         })
+    }
 
+    private fun setupFileEncryption() {
         binding.btnEncryptFile.setOnClickListener {
             filePickerHandler.onFilePicked = { inputUri ->
                 filePickerHandler.onFilePicked = { outputUri ->
@@ -74,7 +68,9 @@ class Lab3Fragment : Fragment() {
             }
             filePickerHandler.pickFileToRead("*/*")
         }
+    }
 
+    private fun setupFileDecryption() {
         binding.btnDecryptFile.setOnClickListener {
             filePickerHandler.onFilePicked = { inputUri ->
                 filePickerHandler.onFilePicked = { outputUri ->
@@ -87,13 +83,5 @@ class Lab3Fragment : Fragment() {
             }
             filePickerHandler.pickFileToRead("*/*")
         }
-
-        return binding.root
-    }
-
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }
