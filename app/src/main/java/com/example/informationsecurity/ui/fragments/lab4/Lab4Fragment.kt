@@ -10,15 +10,18 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab4Binding
+import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.utils.FilePickerHandler
 
 class Lab4Fragment : Fragment() {
 
     private val lab4ViewModel: Lab4ViewModel by viewModels()
+    private val mainViewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentLab4Binding? = null
 
     private lateinit var filePickerHandler: FilePickerHandler
@@ -50,7 +53,7 @@ class Lab4Fragment : Fragment() {
 
         binding.outputPublicKey.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab4ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab4ViewModel.savePublicKey(uri) },
                     onSuccessMessage = "Public Key Saved!"
                 )
@@ -60,7 +63,7 @@ class Lab4Fragment : Fragment() {
 
         binding.outputPublicKey.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab4ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab4ViewModel.loadPublicKey(uri) },
                     onSuccessMessage = "Public Key Loaded!"
                 )
@@ -76,7 +79,7 @@ class Lab4Fragment : Fragment() {
 
         binding.outputPrivateKey.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab4ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab4ViewModel.savePrivateKey(uri) },
                     onSuccessMessage = "Private Key Saved!"
                 )
@@ -86,7 +89,7 @@ class Lab4Fragment : Fragment() {
 
         binding.outputPrivateKey.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab4ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab4ViewModel.loadPrivateKey(uri) },
                     onSuccessMessage = "Private Key Loaded!"
                 )
@@ -108,8 +111,8 @@ class Lab4Fragment : Fragment() {
             return when (menuItem.itemId) {
                 R.id.generate_keys -> {
 
-                    lab4ViewModel.runWithProgress(
-                        task = { lab4ViewModel.generateKeys() },
+                    mainViewModel.runWithProgress(
+                        task = { lab4ViewModel.generateKeys("RSA") },
                         onSuccessMessage = "Keys generated!"
                     )
 
@@ -120,7 +123,7 @@ class Lab4Fragment : Fragment() {
 
                     filePickerHandler.onFilePicked = { inputUri ->
                         filePickerHandler.onFilePicked = { outputUri ->
-                            lab4ViewModel.runWithProgress(
+                            mainViewModel.runWithProgress(
                                 task = { lab4ViewModel.encryptFile(inputUri, outputUri) },
                                 onSuccessMessage = "Encrypted!"
                             )
@@ -137,7 +140,7 @@ class Lab4Fragment : Fragment() {
 
                     filePickerHandler.onFilePicked = { inputUri ->
                         filePickerHandler.onFilePicked = { outputUri ->
-                            lab4ViewModel.runWithProgress(
+                            mainViewModel.runWithProgress(
                                 task = { lab4ViewModel.decryptFile(inputUri, outputUri) },
                                 onSuccessMessage = "Decrypted!"
                             )

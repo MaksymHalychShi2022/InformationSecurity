@@ -6,13 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentEstimatePiBinding
+import com.example.informationsecurity.ui.MainViewModel
 
 class EstimatePiFragment : Fragment() {
 
     private var _binding: FragmentEstimatePiBinding? = null
+    private val mainViewModel: MainViewModel by activityViewModels()
     private val lab1ViewModel: Lab1ViewModel by viewModels()
 
     // This property is only valid between onCreateView and
@@ -29,7 +32,7 @@ class EstimatePiFragment : Fragment() {
             val numberOfPairs: Long? =
                 binding.etHowManyPairsToGenerate.text.toString().toLongOrNull()
             if (numberOfPairs != null && numberOfPairs > 0) {
-                lab1ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab1ViewModel.estimatePi(numberOfPairs, useStandardLib) }
                 )
             } else {

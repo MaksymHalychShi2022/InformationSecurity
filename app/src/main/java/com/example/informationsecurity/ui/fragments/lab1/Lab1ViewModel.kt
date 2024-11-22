@@ -4,11 +4,11 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.example.informationsecurity.ui.MainViewModel
+import com.example.informationsecurity.ui.fragments.BaseViewModel
 import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
 import com.example.informationsecurity.utils.RandomNumbersUtils
 
-class Lab1ViewModel(application: Application) : MainViewModel(application) {
+class Lab1ViewModel(application: Application) : BaseViewModel(application) {
 
     private val _generatedNumbers = MutableLiveData<String>()
     val generatedNumbers: LiveData<String> = _generatedNumbers
@@ -16,22 +16,16 @@ class Lab1ViewModel(application: Application) : MainViewModel(application) {
     private val _estimatedPi = MutableLiveData<Double>()
     val estimatedPi: LiveData<Double> = _estimatedPi
 
-    private val _generator = LehmerRandomNumberGenerator()
+    suspend fun saveGeneratedNumbers(uri: Uri) = generatedNumbers.value?.let {
+        writeToFile(uri, it)
+    } ?: throw Exception("There are no numbers")
 
-    suspend fun saveGeneratedNumbers(uri: Uri) {
-        generatedNumbers.value?.let {
-            writeToFile(uri, it)
-        }
-    }
+    suspend fun loadGeneratedNumbers(uri: Uri) = _generatedNumbers.postValue(readFromFile(uri))
 
-    suspend fun loadGeneratedNumbers(uri: Uri) {
-        val content = readFromFile(uri)
-        _generatedNumbers.postValue(content)
-    }
-
-    suspend fun generateRandomNumbers(lengthOfSequence: Long) {
+    fun generateRandomNumbers(lengthOfSequence: Long) {
         // Generate the sequence
-        val generatedNumbers = _generator.generateSequence(lengthOfSequence)
+        val generator = LehmerRandomNumberGenerator()
+        val generatedNumbers = generator.generateSequence(lengthOfSequence)
         val generatedNumbersString = generatedNumbers.joinToString("\n")
 
         // Update the generated numbers LiveData
@@ -39,7 +33,7 @@ class Lab1ViewModel(application: Application) : MainViewModel(application) {
     }
 
 
-    suspend fun estimatePi(numberOfPairs: Long, useStandardLib: Boolean = true) {
+    fun estimatePi(numberOfPairs: Long, useStandardLib: Boolean = true) {
         val estimatedPi = if (useStandardLib) RandomNumbersUtils.estimatePi(
             { (1L..32767L).random() }, // Lambda for standard random number generation
             totalPairs = numberOfPairs

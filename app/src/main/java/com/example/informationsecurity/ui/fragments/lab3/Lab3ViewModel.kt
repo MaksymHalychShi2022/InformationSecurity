@@ -6,7 +6,7 @@ import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.example.informationsecurity.ui.MainViewModel
+import com.example.informationsecurity.ui.fragments.BaseViewModel
 import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
 import com.example.informationsecurity.utils.MD5
 import com.example.informationsecurity.utils.RC5
@@ -18,17 +18,15 @@ import org.bouncycastle.crypto.params.ParametersWithIV
 import org.bouncycastle.crypto.params.RC5Parameters
 import java.io.FileNotFoundException
 
-class Lab3ViewModel(application: Application) : MainViewModel(application) {
+class Lab3ViewModel(application: Application) : BaseViewModel(application) {
     private val rounds: Int = 12  // Use the rounds parameter
     private val keyLength: Int = 8 // 128-bit key length
     private val contentResolver: ContentResolver = getApplication<Application>().contentResolver
 
-    private val _passphrase = MutableLiveData<String>().apply {
-        value = "This is the passphrase"
-    }
+    private val _passphrase = MutableLiveData<String>()
     val passphrase: LiveData<String> = _passphrase
 
-    fun updatePassphrase(str: String?) {
+    fun updatePassphrase(str: String) {
         _passphrase.postValue(str)
     }
 
@@ -123,13 +121,7 @@ class Lab3ViewModel(application: Application) : MainViewModel(application) {
     }
 
 
-    // Example usage for encryption
-    suspend fun encryptFile(inputUri: Uri, outputUri: Uri) {
-        return processFile(inputUri, outputUri, true)
-    }
+    suspend fun encryptFile(inputUri: Uri, outputUri: Uri) = processFile(inputUri, outputUri, true)
 
-    // Example usage for decryption
-    suspend fun decryptFile(inputUri: Uri, outputUri: Uri) {
-        return processFile(inputUri, outputUri, false)
-    }
+    suspend fun decryptFile(inputUri: Uri, outputUri: Uri) = processFile(inputUri, outputUri, false)
 }

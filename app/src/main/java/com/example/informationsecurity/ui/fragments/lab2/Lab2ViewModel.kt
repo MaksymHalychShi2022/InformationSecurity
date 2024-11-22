@@ -5,31 +5,24 @@ import android.content.ContentResolver
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.example.informationsecurity.ui.MainViewModel
+import com.example.informationsecurity.ui.fragments.BaseViewModel
 import com.example.informationsecurity.utils.MD5
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 
-class Lab2ViewModel(application: Application) : MainViewModel(application) {
+class Lab2ViewModel(application: Application) : BaseViewModel(application) {
 
-    private val _hash = MutableLiveData<String>().apply {
-        value = "Here is the output !"
-    }
+    private val _hash = MutableLiveData<String>()
     val hash: LiveData<String> = _hash
 
-    suspend fun saveHash(uri: Uri) {
-        hash.value?.let {
-            writeToFile(uri, it)
-        }
-    }
+    suspend fun saveHash(uri: Uri) = hash.value?.let {
+        writeToFile(uri, it)
+    } ?: throw Exception("Hash is not available")
 
-    suspend fun loadHash(uri: Uri) {
-        val content = readFromFile(uri)
-        _hash.postValue(content)
-    }
+    suspend fun loadHash(uri: Uri) = _hash.postValue(readFromFile(uri))
 
-    suspend fun hash(input: String) {
+    fun hash(input: String) {
         val md = MD5()
         val hash = md.digest(input.toByteArray()).joinToString("") {
             "%02x".format(it)

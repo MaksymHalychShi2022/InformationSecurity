@@ -1,5 +1,8 @@
 package com.example.informationsecurity.utils
 
+import kotlin.math.abs
+import kotlin.math.sin
+
 class MD5 {
 
     private var a = INIT_A
@@ -24,7 +27,7 @@ class MD5 {
         )
 
         private val TABLE_T = IntArray(64) {
-            ((1L shl 32) * Math.abs(Math.sin(it + 1.0))).toLong().toInt()
+            ((1L shl 32) * abs(sin(it + 1.0))).toLong().toInt()
         }
     }
 

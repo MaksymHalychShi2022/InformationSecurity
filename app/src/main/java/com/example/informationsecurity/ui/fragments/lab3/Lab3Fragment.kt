@@ -17,6 +17,7 @@ import com.example.informationsecurity.utils.FilePickerHandler
 class Lab3Fragment : Fragment() {
 
     private val lab3ViewModel: Lab3ViewModel by viewModels()
+    private val mainViewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentLab3Binding? = null
 
     private lateinit var filePickerHandler: FilePickerHandler
@@ -64,7 +65,7 @@ class Lab3Fragment : Fragment() {
         binding.btnEncryptFile.setOnClickListener {
             filePickerHandler.onFilePicked = { inputUri ->
                 filePickerHandler.onFilePicked = { outputUri ->
-                    lab3ViewModel.runWithProgress(
+                    mainViewModel.runWithProgress(
                         task = { lab3ViewModel.encryptFile(inputUri, outputUri) },
                         onSuccessMessage = "Encrypted!"
                     )
@@ -77,7 +78,7 @@ class Lab3Fragment : Fragment() {
         binding.btnDecryptFile.setOnClickListener {
             filePickerHandler.onFilePicked = { inputUri ->
                 filePickerHandler.onFilePicked = { outputUri ->
-                    lab3ViewModel.runWithProgress(
+                    mainViewModel.runWithProgress(
                         task = { lab3ViewModel.decryptFile(inputUri, outputUri) },
                         onSuccessMessage = "Decrypted!"
                     )

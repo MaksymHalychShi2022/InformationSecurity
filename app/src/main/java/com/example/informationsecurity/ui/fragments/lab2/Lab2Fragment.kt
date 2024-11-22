@@ -11,15 +11,18 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab2Binding
+import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.utils.FilePickerHandler
 
 class Lab2Fragment : Fragment() {
 
     private val lab2ViewModel: Lab2ViewModel by viewModels()
+    private val mainViewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentLab2Binding? = null
 
     private lateinit var filePickerHandler: FilePickerHandler
@@ -51,7 +54,7 @@ class Lab2Fragment : Fragment() {
                 return@setOnClickListener
             }
 
-            lab2ViewModel.runWithProgress(
+            mainViewModel.runWithProgress(
                 task = { lab2ViewModel.hash(inputString) }
             )
         }
@@ -64,7 +67,7 @@ class Lab2Fragment : Fragment() {
 
         binding.outputHash.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab2ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab2ViewModel.saveHash(uri) },
                     onSuccessMessage = "Hash Saved!"
                 )
@@ -74,7 +77,7 @@ class Lab2Fragment : Fragment() {
 
         binding.outputHash.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab2ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab2ViewModel.loadHash(uri) },
                     onSuccessMessage = "Hash Loaded!"
                 )
@@ -97,7 +100,7 @@ class Lab2Fragment : Fragment() {
                 R.id.hash_file -> {
                     // Open the file picker when button is clicked
                     filePickerHandler.onFilePicked = { uri ->
-                        lab2ViewModel.runWithProgress(
+                        mainViewModel.runWithProgress(
                             task = { lab2ViewModel.hash(uri) }
                         )
                     }

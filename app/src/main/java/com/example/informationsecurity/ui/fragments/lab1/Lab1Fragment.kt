@@ -1,8 +1,5 @@
 package com.example.informationsecurity.ui.fragments.lab1
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -14,15 +11,18 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentLab1Binding
+import com.example.informationsecurity.ui.MainViewModel
 import com.example.informationsecurity.utils.FilePickerHandler
 
 class Lab1Fragment : Fragment() {
 
+    private val mainViewModel: MainViewModel by activityViewModels()
     private val lab1ViewModel: Lab1ViewModel by viewModels()
     private var _binding: FragmentLab1Binding? = null
 
@@ -72,7 +72,7 @@ class Lab1Fragment : Fragment() {
                     Toast.makeText(context, "Invalid input!", Toast.LENGTH_LONG).show()
                     return@setOnClickListener
                 }
-                lab1ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab1ViewModel.generateRandomNumbers(length) },
                     onSuccessMessage = "Generated!"
                 )
@@ -88,7 +88,7 @@ class Lab1Fragment : Fragment() {
 
         binding.outputGeneratedNumbers.btnSave.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab1ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab1ViewModel.saveGeneratedNumbers(uri) },
                     onSuccessMessage = "Saved!"
                 )
@@ -98,7 +98,7 @@ class Lab1Fragment : Fragment() {
 
         binding.outputGeneratedNumbers.btnLoad.setOnClickListener {
             filePickerHandler.onFilePicked = { uri ->
-                lab1ViewModel.runWithProgress(
+                mainViewModel.runWithProgress(
                     task = { lab1ViewModel.loadGeneratedNumbers(uri) },
                     onSuccessMessage = "Loaded!"
                 )
