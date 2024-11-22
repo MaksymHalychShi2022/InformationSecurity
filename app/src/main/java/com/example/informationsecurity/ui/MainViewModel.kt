@@ -1,7 +1,6 @@
 package com.example.informationsecurity.ui
 
 import android.app.Application
-import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -27,9 +26,8 @@ open class MainViewModel(application: Application) : AndroidViewModel(applicatio
             ).show()
         }
     ) {
-        _isVisibleProgressBar.value = true  // Show progress bar
         viewModelScope.launch {
-            Log.d("ViewBinding", "ProgressBar: ${_isVisibleProgressBar.value}")
+            _isVisibleProgressBar.value = true  // Show progress bar
             try {
                 val result = task() // Execute the suspend function
                 onSuccessMessage?.let {
@@ -39,10 +37,8 @@ open class MainViewModel(application: Application) : AndroidViewModel(applicatio
             } catch (e: Throwable) {
                 onError?.invoke(e) // Call onError if provided
             } finally {
-
+                _isVisibleProgressBar.value = false // Hide progress bar
             }
-            _isVisibleProgressBar.value = false // Hide progress bar
-            Log.d("ViewBinding", "ProgressBar: ${_isVisibleProgressBar.value}")
         }
     }
 }

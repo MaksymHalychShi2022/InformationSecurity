@@ -45,7 +45,6 @@ class MainActivity : AppCompatActivity() {
 
         mainViewModel.isVisibleProgressBar.observe(this) {
             binding.appBarMain.progressBar.isVisible = it
-            Log.d("ViewBinding", "ProgressBar: ${binding.appBarMain.progressBar}")
         }
     }
 
