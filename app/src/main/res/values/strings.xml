@@ -30,7 +30,22 @@
     <string name="menu_lab4">Lab 4</string>
     <string name="load_public_key">Load public key</string>
     <string name="load_private_key">Load private key</string>
-    <string name="generate_keys">Generate</string>
+    <string name="generate_keys">Generate Keys</string>
     <string name="save_public_key">Save Public Key</string>
     <string name="save_private_key">Save Private Key</string>
+    <string name="menu_lab5">Lab 5</string>
+    <string name="sign">Sign</string>
+    <string name="sign_file">Sign file</string>
+    <string name="check_file_signature">Check file signature</string>
+    <string name="save_signature">Save signature</string>
+    <string name="load_signature">Load signature</string>
+    <string name="verify_file_signature">Verify file</string>
+    <string name="verify">Verify</string>
+    <string name="hash_file">Hash file</string>
+    <string name="verify_file_hash">Verify file hash</string>
+    <string name="verify_signature">Verify Signature</string>
+    <string name="private_key">Private key</string>
+    <string name="public_key">Public key</string>
+    <string name="signature">Signature</string>
+    <string name="generated_numbers">Generated numbers</string>
 </resources>

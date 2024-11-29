@@ -1,47 +1,38 @@
 package com.example.informationsecurity.ui.fragments.lab3
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
-import com.example.informationsecurity.ui.MainViewModel
+import androidx.fragment.app.viewModels
 import com.example.informationsecurity.databinding.FragmentLab3Binding
-import com.example.informationsecurity.utils.OperationState
+import com.example.informationsecurity.ui.MainViewModel
+import com.example.informationsecurity.ui.fragments.BaseFragment
 
-class Lab3Fragment : Fragment() {
+class Lab3Fragment : BaseFragment<FragmentLab3Binding>() {
 
-    private lateinit var encryptFilePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var encryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var decryptFilePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var decryptOutputFilePickerLauncher: ActivityResultLauncher<Intent>
-
-    private var _binding: FragmentLab3Binding? = null
-    private lateinit var lab3ViewModel: Lab3ViewModel
+    private val lab3ViewModel: Lab3ViewModel by viewModels()
     private val mainViewModel: MainViewModel by activityViewModels()
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        lab3ViewModel = ViewModelProvider(this).get(Lab3ViewModel::class.java)
+        return inflateBinding(inflater, container, FragmentLab3Binding::inflate).root
+    }
 
-        _binding = FragmentLab3Binding.inflate(inflater, container, false)
-        val root: View = binding.root
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
+        setupPassphraseListener()
+        setupFileEncryption()
+        setupFileDecryption()
+    }
+
+    private fun setupPassphraseListener() {
+        // Observe changes to passphrase from ViewModel and update the EditText
         lab3ViewModel.passphrase.observe(viewLifecycleOwner) {
             if (binding.etPassphrase.text.toString() != it) {
                 binding.etPassphrase.setText(it)
@@ -62,117 +53,35 @@ class Lab3Fragment : Fragment() {
 
             override fun afterTextChanged(s: Editable?) {}
         })
+    }
 
+    private fun setupFileEncryption() {
         binding.btnEncryptFile.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
+            filePickerHandler.onFilePicked = { inputUri ->
+                filePickerHandler.onFilePicked = { outputUri ->
+                    mainViewModel.runWithProgress(
+                        task = { lab3ViewModel.encryptFile(inputUri, outputUri) },
+                        onSuccessMessage = "Encrypted!"
+                    )
+                }
+                filePickerHandler.pickFileToWrite("application/octet-stream", "encrypted.txt")
             }
-            encryptFilePickerLauncher.launch(intent)
+            filePickerHandler.pickFileToRead("*/*")
         }
+    }
 
-
+    private fun setupFileDecryption() {
         binding.btnDecryptFile.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"  // You can change this MIME type if you want to filter file types
+            filePickerHandler.onFilePicked = { inputUri ->
+                filePickerHandler.onFilePicked = { outputUri ->
+                    mainViewModel.runWithProgress(
+                        task = { lab3ViewModel.decryptFile(inputUri, outputUri) },
+                        onSuccessMessage = "Decrypted!"
+                    )
+                }
+                filePickerHandler.pickFileToWrite("application/octet-stream", "decrypted.txt")
             }
-            decryptFilePickerLauncher.launch(intent)
+            filePickerHandler.pickFileToRead("*/*")
         }
-        return root
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        var inputUri: Uri? = null
-
-        encryptFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    inputUri = result.data?.data
-
-                    inputUri?.let {
-                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            type = "application/octet-stream" // MIME type for binary files
-                            putExtra(Intent.EXTRA_TITLE, "encrypted.txt") // Default file name
-                        }
-                        encryptOutputFilePickerLauncher.launch(intent)
-                    }
-                }
-            }
-
-        encryptOutputFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val outputUri: Uri? = result.data?.data
-                    outputUri?.let {
-                        // Process the selected file's Uri for reading
-                        lab3ViewModel.encryptFile(inputUri!!, it)
-                            .observe(viewLifecycleOwner) { result ->
-                                observeForProgressBar(result, "Encrypted!")
-                            }
-                    }
-                }
-                inputUri = null // so it could not be used in later calls
-            }
-
-
-        decryptFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    inputUri = result.data?.data
-                    inputUri?.let {
-                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            type = "application/octet-stream" // MIME type for binary files
-                            putExtra(Intent.EXTRA_TITLE, "decrypted.txt") // Default file name
-                        }
-                        decryptOutputFilePickerLauncher.launch(intent)
-                    }
-                }
-            }
-
-        decryptOutputFilePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri: Uri? = result.data?.data
-                    uri?.let {
-                        lab3ViewModel.decryptFile(inputUri!!, it)
-                            .observe(viewLifecycleOwner) { result ->
-                                observeForProgressBar(result, "Decrypted!")
-                            }
-                    }
-                }
-                inputUri = null
-            }
-    }
-
-
-    private fun observeForProgressBar(result: OperationState<*>, successMassage: String? = null) {
-        when (result) {
-            is OperationState.Loading -> {
-                mainViewModel.showProgressBar()
-            }
-
-            is OperationState.Success -> {
-                successMassage?.let {
-                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-                }
-                mainViewModel.hideProgressBar()
-            }
-
-            is OperationState.Error -> {
-                Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
-                mainViewModel.hideProgressBar()
-            }
-        }
-    }
-
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

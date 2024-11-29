@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/generate_keys"
+        android:title="@string/generate_keys"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/verify_signature"
+        android:title="@string/verify_signature"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/sign_file"
+        android:title="@string/sign_file"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/verify_file_signature"
+        android:title="@string/verify_file_signature"
+        app:showAsAction="never" />
+</menu>

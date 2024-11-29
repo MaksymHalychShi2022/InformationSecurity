@@ -6,16 +6,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import com.example.informationsecurity.R
 import com.example.informationsecurity.databinding.FragmentEstimatePiBinding
-import com.example.informationsecurity.utils.LehmerRandomNumberGenerator
-import com.example.informationsecurity.utils.RandomNumbersUtils
+import com.example.informationsecurity.ui.MainViewModel
 
 class EstimatePiFragment : Fragment() {
 
     private var _binding: FragmentEstimatePiBinding? = null
-    private lateinit var viewModel: Lab1ViewModel
+    private val mainViewModel: MainViewModel by activityViewModels()
+    private val lab1ViewModel: Lab1ViewModel by viewModels()
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -24,30 +25,22 @@ class EstimatePiFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        viewModel = ViewModelProvider(this).get(Lab1ViewModel::class.java)
-
         _binding = FragmentEstimatePiBinding.inflate(inflater, container, false)
-        val root: View = binding.root
 
         binding.btnGenerate.setOnClickListener {
             val useStandardLib: Boolean = binding.cbUseStandardLib.isChecked
             val numberOfPairs: Long? =
                 binding.etHowManyPairsToGenerate.text.toString().toLongOrNull()
             if (numberOfPairs != null && numberOfPairs > 0) {
-                val estimatedPi = if (useStandardLib) RandomNumbersUtils.estimatePi(
-                    { (1L..32767L).random() }, // Lambda for standard random number generation
-                    totalPairs = numberOfPairs
-                ) else RandomNumbersUtils.estimatePi(
-                    LehmerRandomNumberGenerator()::next, // Function reference to the Lehmer RNG's next() method
-                    totalPairs = numberOfPairs
+                mainViewModel.runWithProgress(
+                    task = { lab1ViewModel.estimatePi(numberOfPairs, useStandardLib) }
                 )
-                viewModel.updateEstimatedPi(estimatedPi)
             } else {
                 Toast.makeText(context, "Invalid input!", Toast.LENGTH_LONG).show()
             }
         }
 
-        viewModel.estimatedPi.observe(viewLifecycleOwner) {
+        lab1ViewModel.estimatedPi.observe(viewLifecycleOwner) {
             binding.tvOutput.text = it.toString()
         }
 
@@ -58,7 +51,7 @@ class EstimatePiFragment : Fragment() {
         }
 
 
-        return root
+        return binding.root
     }
 
     override fun onDestroyView() {
